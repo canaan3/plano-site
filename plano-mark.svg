@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="Plano 标记">
+  <rect width="240" height="240" fill="#F4F3EF"/>
+  <g fill="none" stroke="#101010" stroke-width="6" stroke-linecap="square">
+    <path d="M56 56 V184 H184"/>
+    <path d="M56 56 H104 A48 48 0 0 1 104 152 H56"/>
+  </g>
+</svg>

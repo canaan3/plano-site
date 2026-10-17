@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plano — 拍几张照片，家就排好了</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Crect width='26' height='26' fill='%23F4F3EF'/%3E%3Cpath d='M23 23 H3 V3 H12.5 A5 5 0 0 1 12.5 13 H3' fill='none' stroke='%23101010' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Noto+Sans+SC:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F4F3EF; --paper-2:#EAE8E2; --ink:#101010;
+  --ink-70:rgba(16,16,16,.70); --ink-45:rgba(16,16,16,.45);
+  --ink-25:rgba(16,16,16,.25); --line:rgba(16,16,16,.16); --line-strong:rgba(16,16,16,.32);
+  --mono:'IBM Plex Mono','SFMono-Regular',Consolas,'Liberation Mono',monospace;
+  --sans:'Noto Sans SC','Archivo','PingFang SC','Microsoft YaHei',sans-serif;
+  --serif:'Instrument Serif','Songti SC','SimSun',serif;
+  --max:1280px; --pad:clamp(20px,5vw,72px);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-weight:400;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body.locked{overflow:hidden}
+::selection{background:var(--ink);color:var(--paper)}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+button{font:inherit;color:inherit}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:.045;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E")}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 var(--pad)}
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-45)}
+.rule{height:1px;background:var(--line);width:100%}
+
+header.nav{position:sticky;top:0;z-index:100;backdrop-filter:blur(14px);background:rgba(244,243,239,.82);border-bottom:1px solid var(--line)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;height:70px}
+.brand{display:flex;align-items:center;gap:10px;cursor:pointer}
+.brand svg{width:26px;height:26px;overflow:visible}
+.brand span{font-family:var(--mono);font-weight:500;font-size:16px;letter-spacing:.34em;margin-left:2px}
+.nav-links{display:flex;gap:30px}
+.nav-links a{font-size:13px;letter-spacing:.04em;color:var(--ink-70);position:relative;padding:4px 0}
+.nav-links a::after{content:"";position:absolute;left:0;bottom:0;height:1px;width:0;background:var(--ink);transition:width .35s cubic-bezier(.2,.7,.2,1)}
+.nav-links a:hover{color:var(--ink)}.nav-links a:hover::after{width:100%}
+.btn{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--ink);background:transparent;color:var(--ink);
+  font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;padding:12px 20px;border-radius:999px;cursor:pointer;
+  transition:background .3s,color .3s,transform .3s}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn--solid{background:var(--ink);color:var(--paper)}
+.btn--solid:hover{background:transparent;color:var(--ink)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn:disabled:hover{background:transparent;color:var(--ink)}
+.btn--sm{padding:8px 14px;font-size:10px}
+@media(max-width:960px){.nav-links{display:none}}
+
+.hero{padding:clamp(48px,7vw,96px) 0 clamp(32px,4vw,56px)}
+.hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:clamp(28px,4vw,64px);align-items:center}
+.kicker{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.kicker i{display:block;width:36px;height:1px;background:var(--ink-45)}
+h1{font-size:clamp(42px,6.2vw,86px);line-height:.98;letter-spacing:-.035em;font-weight:900;margin:0 0 26px}
+h1 em{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:-.02em}
+.lede{max-width:50ch;font-size:clamp(14px,1.15vw,16px);line-height:1.9;color:var(--ink-70);font-weight:300;margin:0 0 32px}
+.cta-row{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.link-arrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;border-bottom:1px solid var(--ink-25);padding-bottom:4px;transition:border-color .3s;cursor:pointer;background:none;border-top:0;border-left:0;border-right:0}
+.link-arrow:hover{border-color:var(--ink)}
+.stats{display:flex;gap:clamp(20px,3vw,44px);margin-top:42px;padding-top:22px;border-top:1px solid var(--line);flex-wrap:wrap}
+.stat b{display:block;font-family:var(--mono);font-size:20px;font-weight:400;letter-spacing:-.01em;margin-bottom:4px}
+.stat span{font-size:11px;color:var(--ink-45);letter-spacing:.06em}
+.dwg{border:1px solid var(--line-strong);background:var(--paper);display:flex;flex-direction:column;box-shadow:0 40px 80px -60px rgba(16,16,16,.6)}
+.dwg-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.dwg-bar .mono{font-size:9.5px;letter-spacing:.16em}
+.dwg-body{position:relative;background-image:linear-gradient(rgba(16,16,16,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(16,16,16,.045) 1px,transparent 1px);background-size:26px 26px;padding:8px 0 0}
+.dwg-foot{display:flex;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--line)}
+.dwg-foot .mono{font-size:9px;letter-spacing:.14em}
+.iso-svg{width:100%;height:auto;display:block;color:var(--ink)}
+.iso-svg *{vector-effect:non-scaling-stroke}
+.iso-svg .wall{stroke:var(--ink);stroke-width:1.15;fill:none}
+.iso-svg .soft{stroke:var(--ink-45);stroke-width:.85;fill:none}
+.iso-svg .fine{stroke:var(--ink-25);stroke-width:.7;fill:none}
+.iso-svg .lbl{fill:var(--ink);stroke:none;font-family:var(--mono);font-size:8px;letter-spacing:.1em;opacity:.5}
+.iso-svg .dim{stroke:var(--ink-25);stroke-width:.6;fill:none;stroke-dasharray:3 3}
+.draw{stroke-dasharray:1400;stroke-dashoffset:1400;animation:draw 2.6s cubic-bezier(.3,.8,.2,1) forwards}
+.d2{animation-delay:.25s}.d3{animation-delay:.45s}.d4{animation-delay:.65s}.d5{animation-delay:.85s}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+.band{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:clamp(24px,4vw,56px)}
+.band-in{display:grid;grid-template-columns:repeat(4,1fr)}
+.band-item{padding:20px 0 22px;border-right:1px solid var(--line);padding-left:clamp(0px,2vw,24px)}
+.band-item:first-child{padding-left:0}.band-item:last-child{border-right:0}
+.band-item b{display:block;font-size:15px;font-weight:700;letter-spacing:.02em;margin-bottom:4px}
+.band-item span{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;color:var(--ink-45)}
+@media(max-width:760px){.band-in{grid-template-columns:1fr 1fr}.band-item:nth-child(2){border-right:0}}
+
+.sec-head{display:grid;grid-template-columns:1fr 1.1fr;gap:clamp(20px,4vw,60px);align-items:end;padding:clamp(64px,9vw,120px) 0 clamp(28px,4vw,44px)}
+.sec-head h2{font-size:clamp(30px,3.6vw,50px);line-height:1.12;letter-spacing:-.03em;font-weight:900;margin:0}
+.sec-head p{margin:0;color:var(--ink-70);font-weight:300;line-height:1.9;max-width:52ch;font-size:14.5px}
+@media(max-width:860px){.sec-head{grid-template-columns:1fr;align-items:start}}
+
+.reveal{position:relative;overflow:hidden;border:1px solid var(--line-strong);aspect-ratio:16/9;cursor:ew-resize;user-select:none;touch-action:none;--x:52%}
+.reveal img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05)}
+.reveal .plan{position:absolute;inset:0;background:var(--paper);clip-path:inset(0 0 0 var(--x))}
+.reveal .plan svg{width:100%;height:100%;display:block;color:var(--ink)}
+.plan-svg *{vector-effect:non-scaling-stroke}
+.plan-svg .w{stroke:var(--ink);stroke-width:1.6;fill:none}
+.plan-svg .f{stroke:var(--ink);stroke-width:1;fill:none}
+.plan-svg .g{stroke:rgba(16,16,16,.12);stroke-width:.6;fill:none}
+.plan-svg .d{stroke:var(--ink-25);stroke-width:.6;fill:none}
+.plan-svg .t{fill:var(--ink);stroke:none;font-family:var(--mono);font-size:9px;letter-spacing:.12em;opacity:.55}
+.handle{position:absolute;top:0;bottom:0;left:var(--x);width:1px;background:var(--ink);transform:translateX(-.5px);pointer-events:none}
+.handle::after{content:"";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:46px;height:46px;border:1px solid var(--ink);border-radius:50%;background:var(--paper)}
+.handle::before{content:"↔";position:absolute;top:50%;left:50%;transform:translate(-50%,-51%);font-family:var(--mono);font-size:13px;color:var(--ink);z-index:2}
+.rv-tag{position:absolute;bottom:14px;font-family:var(--mono);font-size:9px;letter-spacing:.2em;padding:5px 9px;background:var(--paper);border:1px solid var(--line-strong)}
+.rv-tag.a{left:14px}.rv-tag.b{right:14px}
+.rv-cap{display:flex;justify-content:space-between;gap:16px;padding-top:14px;flex-wrap:wrap}
+.rv-cap .mono{font-size:9.5px}
+
+.feats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line-strong)}
+.feat{padding:clamp(24px,3vw,40px) clamp(18px,2.4vw,36px);border-right:1px solid var(--line);border-bottom:1px solid var(--line-strong);transition:background .45s}
+.feat:last-child{border-right:0}
+.feat:hover{background:var(--paper-2)}
+.feat .num{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--ink-45);display:block;margin-bottom:clamp(30px,6vw,76px)}
+.feat h3{font-size:clamp(19px,1.6vw,23px);letter-spacing:-.01em;margin:0 0 14px;font-weight:700}
+.feat p{margin:0;font-size:13.5px;line-height:1.9;color:var(--ink-70);font-weight:300}
+.feat ul{list-style:none;padding:0;margin:24px 0 0;border-top:1px solid var(--line)}
+.feat li{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--ink-45);padding:8px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
+@media(max-width:860px){.feats{grid-template-columns:1fr}.feat{border-right:0}}
+
+.move{background:var(--ink);color:var(--paper);margin-top:clamp(64px,9vw,120px)}
+.move .mono{color:rgba(244,243,239,.5)}
+.move .sec-head p{color:rgba(244,243,239,.66)}
+.move-in{padding-bottom:clamp(56px,8vw,110px)}
+.two-shots{display:grid;grid-template-columns:1fr 1fr;gap:clamp(14px,2vw,24px);margin-bottom:clamp(28px,4vw,48px)}
+.shot{position:relative;border:1px solid rgba(244,243,239,.22);overflow:hidden}
+.shot img{width:100%;height:100%;object-fit:cover;aspect-ratio:4/3;filter:grayscale(1) contrast(1.05);opacity:.92;transition:opacity .5s,transform 1.2s cubic-bezier(.2,.7,.2,1)}
+.shot:hover img{opacity:1;transform:scale(1.03)}
+.shot .cap{position:absolute;top:10px;left:10px;font-family:var(--mono);font-size:9px;letter-spacing:.2em;padding:5px 9px;background:rgba(16,16,16,.7);color:var(--paper);border:1px solid rgba(244,243,239,.3)}
+.move-out{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(28px,4vw,64px);align-items:center;border-top:1px solid rgba(244,243,239,.16);padding-top:clamp(28px,4vw,44px)}
+.move-out h3{font-size:clamp(26px,3.2vw,42px);line-height:1.15;letter-spacing:-.03em;margin:0 0 18px;font-weight:900}
+.move-out h3 em{font-family:var(--serif);font-style:italic;font-weight:400}
+.move-out p{color:rgba(244,243,239,.66);line-height:1.9;font-weight:300;font-size:14px;margin:0;max-width:46ch}
+.counts{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(244,243,239,.16);border-left:1px solid rgba(244,243,239,.16)}
+.count{padding:clamp(16px,2.2vw,26px);border-right:1px solid rgba(244,243,239,.16);border-bottom:1px solid rgba(244,243,239,.16)}
+.count b{display:block;font-family:var(--mono);font-size:clamp(26px,3vw,38px);font-weight:300;letter-spacing:-.02em;line-height:1}
+.count span{display:block;margin-top:10px;font-size:10.5px;letter-spacing:.06em;color:rgba(244,243,239,.5)}
+@media(max-width:860px){.move-out{grid-template-columns:1fr}}
+
+.steps{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line-strong);margin-bottom:clamp(64px,9vw,110px)}
+.step{padding:clamp(20px,2.6vw,32px) clamp(14px,2vw,26px) clamp(28px,4vw,48px);border-right:1px solid var(--line)}
+.step:last-child{border-right:0}
+.step .n{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--ink-45)}
+.step .bar{height:1px;background:var(--ink);width:18px;margin:16px 0 26px;transition:width .5s cubic-bezier(.2,.7,.2,1)}
+.step:hover .bar{width:100%}
+.step h4{margin:0 0 10px;font-size:16px;letter-spacing:-.01em;font-weight:700}
+.step p{margin:0;font-size:12.5px;line-height:1.85;color:var(--ink-70);font-weight:300}
+@media(max-width:860px){.steps{grid-template-columns:1fr 1fr}.step{border-bottom:1px solid var(--line)}.step:nth-child(2n){border-right:0}}
+
+/* scenes: 4 text cards */
+.scenes{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(18px,2.4vw,34px);padding-bottom:clamp(40px,6vw,80px)}
+.scene{border:1px solid var(--line);padding:clamp(20px,2.6vw,32px);background:transparent;transition:border-color .35s,background .35s}
+.scene:hover{border-color:var(--line-strong);background:var(--paper-2)}
+.scene .mono{font-size:9.5px;display:block;margin-bottom:18px}
+.scene h4{margin:0 0 12px;font-size:17px;font-weight:700;letter-spacing:-.01em}
+.scene p{margin:0;font-size:13px;line-height:1.9;color:var(--ink-70);font-weight:300}
+@media(max-width:760px){.scenes{grid-template-columns:1fr}}
+
+/* spec table */
+.spec{border-top:1px solid var(--line-strong);border-bottom:1px solid var(--line-strong);padding-bottom:clamp(40px,6vw,76px);margin-bottom:clamp(40px,6vw,80px)}
+.spec-row{display:grid;grid-template-columns:1.1fr 1.6fr;gap:clamp(16px,3vw,48px);padding:20px 0;border-bottom:1px solid var(--line)}
+.spec-row:last-child{border-bottom:0}
+.spec-row b{font-size:14px;font-weight:700}
+.spec-row span{font-size:13px;line-height:1.9;color:var(--ink-70);font-weight:300}
+
+/* faq */
+.faq{border-top:1px solid var(--line-strong)}
+.faq-item{border-bottom:1px solid var(--line)}
+.faq-q{width:100%;display:flex;justify-content:space-between;gap:20px;align-items:center;text-align:left;background:none;border:0;padding:22px 0;cursor:pointer;font-size:15px;font-weight:700;letter-spacing:-.01em}
+.faq-q i{font-family:var(--mono);font-style:normal;font-size:16px;color:var(--ink-45);transition:transform .35s}
+.faq-item.open .faq-q i{transform:rotate(45deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .45s cubic-bezier(.2,.7,.2,1)}
+.faq-a p{margin:0;padding:0 0 24px;font-size:13.5px;line-height:1.95;color:var(--ink-70);font-weight:300;max-width:74ch}
+
+.final{border-top:1px solid var(--line-strong);padding:clamp(60px,9vw,120px) 0}
+.final h2{font-size:clamp(38px,6.6vw,92px);line-height:.95;letter-spacing:-.045em;font-weight:900;margin:0 0 clamp(30px,5vw,52px)}
+.final h2 em{font-family:var(--serif);font-style:italic;font-weight:400}
+.signup{display:flex;align-items:center;border-bottom:1px solid var(--ink);max-width:620px}
+.signup input{flex:1;border:0;background:transparent;padding:18px 2px;font-family:var(--mono);font-size:13px;letter-spacing:.04em;color:var(--ink);outline:none;min-width:0}
+.signup input::placeholder{color:var(--ink-25);letter-spacing:.1em;text-transform:uppercase;font-size:11px}
+.signup button{border:0;background:transparent;cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;padding:18px 4px 18px 24px;transition:opacity .3s;white-space:nowrap}
+.signup button:hover{opacity:.5}
+.fineprint{margin-top:18px;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;color:var(--ink-45)}
+
+footer{border-top:1px solid var(--line);padding:clamp(36px,5vw,64px) 0 30px}
+.foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:32px;margin-bottom:clamp(40px,6vw,72px)}
+.foot-grid h5{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;color:var(--ink-45);margin:0 0 16px;font-weight:400;text-transform:uppercase}
+.foot-grid a{display:block;font-size:13px;color:var(--ink-70);padding:5px 0;transition:color .25s;cursor:pointer}
+.foot-grid a:hover{color:var(--ink)}
+.foot-bottom{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px}
+@media(max-width:760px){.foot-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:980px){.hero-grid{grid-template-columns:1fr}.dwg{margin-top:16px}}
+
+.r{opacity:0;transform:translateY(16px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0s)}
+.in .r{opacity:1;transform:none}
+.r.in{opacity:1;transform:none}
+
+/* ================= STUDIO ================= */
+.studio{position:fixed;inset:0;z-index:300;background:var(--paper);display:none;flex-direction:column}
+.studio.open{display:flex}
+.st-top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 var(--pad);height:62px;border-bottom:1px solid var(--line-strong);flex:0 0 auto;background:var(--paper)}
+.st-top .l{display:flex;align-items:center;gap:14px}
+.st-top .l svg{width:22px;height:22px}
+.st-top .l b{font-family:var(--mono);font-weight:500;letter-spacing:.3em;font-size:14px}
+.st-top .l span{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;color:var(--ink-45)}
+.st-body{flex:1 1 auto;display:grid;grid-template-columns:392px 1fr;min-height:0}
+.st-left{border-right:1px solid var(--line-strong);padding:22px var(--pad) 40px 22px;overflow:auto;min-width:0}
+.st-right{overflow:auto;padding:22px 26px 60px;min-width:0}
+@media(max-width:900px){.st-body{grid-template-columns:1fr}.st-left{border-right:0;border-bottom:1px solid var(--line-strong);max-height:52vh}.st-right{padding:18px}}
+
+.roomswitch{display:flex;gap:8px;margin-bottom:16px}
+.roomswitch button{flex:1;border:1px solid var(--line-strong);background:transparent;padding:10px;font-family:var(--mono);font-size:10px;letter-spacing:.14em;cursor:pointer;transition:.3s}
+.roomswitch button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.drop{border:1px dashed var(--line-strong);padding:34px 18px;text-align:center;cursor:pointer;transition:background .3s,border-color .3s;background:transparent}
+.drop:hover{background:var(--paper-2)}
+.drop.over{background:var(--paper-2);border-color:var(--ink);border-style:solid}
+.drop b{display:block;font-size:14px;font-weight:700;margin-bottom:8px}
+.drop em{display:block;font-style:normal;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--ink-45);line-height:1.9}
+.thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.thumbs:empty{margin-top:0}
+.thumb{position:relative;aspect-ratio:1;border:1px solid var(--line);overflow:hidden;background:var(--paper-2)}
+.thumb img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05)}
+.thumb button{position:absolute;top:3px;right:3px;width:20px;height:20px;border:1px solid var(--line-strong);background:rgba(244,243,239,.9);cursor:pointer;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+.thumb .tag{position:absolute;left:3px;bottom:3px;font-family:var(--mono);font-size:8px;letter-spacing:.12em;background:rgba(16,16,16,.75);color:var(--paper);padding:2px 5px}
+.st-actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.st-actions .btn{flex:1;justify-content:center;min-width:110px}
+.hint{margin-top:16px;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--ink-45);line-height:2}
+
+.prog{margin-top:20px;border-top:1px solid var(--line);padding-top:16px}
+.prog-bar{height:2px;background:var(--line);overflow:hidden}
+.prog-bar i{display:block;height:100%;width:0;background:var(--ink);transition:width .35s cubic-bezier(.2,.7,.2,1)}
+.prog-list{list-style:none;margin:14px 0 0;padding:0}
+.prog-list li{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--ink-25);padding:5px 0;display:flex;gap:8px;transition:color .3s}
+.prog-list li.done{color:var(--ink-45)}
+.prog-list li.now{color:var(--ink)}
+.prog-list li.done::before{content:"✓";color:var(--ink)}
+.prog-list li.now::before{content:"→";color:var(--ink)}
+.prog-list li.wait::before{content:"·"}
+
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;gap:14px;color:var(--ink-45)}
+.empty svg{width:64px;height:64px;opacity:.35}
+.empty b{font-size:16px;color:var(--ink-70);font-weight:700}
+.empty p{margin:0;font-size:13px;max-width:34ch;line-height:1.9;font-weight:300}
+
+.res-head{border-bottom:1px solid var(--line-strong);padding-bottom:20px;margin-bottom:22px}
+.res-head h3{margin:0 0 12px;font-size:clamp(20px,2.2vw,28px);letter-spacing:-.02em;font-weight:900}
+.res-head p{margin:0;font-size:13.5px;line-height:1.9;color:var(--ink-70);font-weight:300;max-width:76ch}
+.kpis{display:flex;gap:26px;flex-wrap:wrap;margin-top:20px}
+.kpi b{display:block;font-family:var(--mono);font-size:19px;font-weight:400;margin-bottom:3px}
+.kpi span{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--ink-45)}
+.readout{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.readout span{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;color:var(--ink-45)}
+.readout span b{color:var(--ink);font-weight:400}
+.notes{list-style:none;padding:0;margin:16px 0 0;border-left:1px solid var(--line-strong)}
+.notes li{font-size:12.5px;line-height:1.85;color:var(--ink-70);font-weight:300;padding:4px 0 4px 14px}
+.resid{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--ink-45);margin-bottom:8px}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line-strong);margin-bottom:24px;flex-wrap:wrap}
+.tabs button{background:none;border:0;border-bottom:1px solid transparent;padding:11px 16px 11px 0;margin-right:22px;cursor:pointer;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-45);transition:color .3s,border-color .3s}
+.tabs button.on{color:var(--ink);border-color:var(--ink)}
+.pane[hidden]{display:none}
+.tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.tbl th{text-align:left;font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-45);font-weight:400;padding:0 8px 10px 0;border-bottom:1px solid var(--line-strong)}
+.tbl td{padding:11px 8px 11px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl td.n,.tbl th.n{font-family:var(--mono);white-space:nowrap}
+.tbl tr:hover td{background:var(--paper-2)}
+.pill{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.1em;border:1px solid var(--line-strong);padding:2px 7px;margin-right:6px}
+.pill.warn{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+.block{border:1px solid var(--line);padding:18px 20px;margin-bottom:16px}
+.block h4{margin:0 0 12px;font-size:13px;font-weight:700;letter-spacing:.02em}
+.block ul{margin:0;padding-left:18px}
+.block li{font-size:13px;line-height:1.9;color:var(--ink-70);font-weight:300;margin-bottom:6px}
+.block ol{margin:0;padding-left:20px}
+.block ol li{font-size:13px;line-height:1.95;color:var(--ink-70);font-weight:300;margin-bottom:8px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.two-col{grid-template-columns:1fr}}
+.dwg2{border:1px solid var(--line-strong);background:var(--paper);position:relative}
+.dwg2 .hd{display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line)}
+.dwg2 .hd span{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--ink-45)}
+.dwg2 .bd{padding:6px;background-image:linear-gradient(rgba(16,16,16,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(16,16,16,.05) 1px,transparent 1px);background-size:24px 24px}
+.dwg2 svg{width:100%;height:auto;display:block}
+.dwg2 svg *{vector-effect:non-scaling-stroke}
+.gs{stroke:var(--ink);fill:none}
+.gs.w{stroke-width:1.5}
+.gs.f{stroke-width:1}
+.gs.t{stroke-width:.7;stroke:var(--ink-25)}
+.gs.d{stroke-width:.6;stroke:var(--ink-25);stroke-dasharray:3 3}
+.gt{fill:var(--ink);stroke:none;font-family:var(--mono);opacity:.6}
+.res-foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px;padding-top:20px;border-top:1px solid var(--line-strong)}
+.note{margin-top:14px;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--ink-45);line-height:1.9}
+@media print{
+  .nav,.studio .st-top,.studio .st-left,.res-foot,.tabs,.final,footer,.band,body::before{display:none!important}
+  .studio{position:static;display:block}
+  .studio .st-body{display:block}
+  .studio .st-right{overflow:visible;padding:0}
+  .pane[hidden]{display:block!important}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" data-open="1">
+      <svg viewBox="0 0 26 26" aria-hidden="true"><path d="M23 23 H3 V3 H12.5 A5 5 0 0 1 12.5 13 H3" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>PLANO</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#scan">示例</a>
+      <a href="#features">能力</a>
+      <a href="#move">换家模式</a>
+      <a href="#scenes">场景</a>
+      <a href="#faq">常见问题</a>
+    </nav>
+    <button class="btn" data-open="1">打开工作台</button>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <div class="kicker"><i></i><span class="mono">AI SPATIAL PLANNING / 01</span></div>
+        <h1>拍几张照片，<br>家就<em>排</em>好了。</h1>
+        <p class="lede">把房间的照片丢进来，Plano 会数清楚你有多少东西、每件多大、该放在哪一面墙，然后画成平面图和立体草图，写成一页能照着做的清单。搬家、换房、收纳、装修前量房——你只需要拍照。</p>
+        <div class="cta-row">
+          <button class="btn btn--solid" data-open="1">上传照片，开始</button>
+          <a class="link-arrow" href="#scan">看一个例子 →</a>
+        </div>
+        <div class="stats">
+          <div class="stat"><b>1,200+</b><span>可识别物品类别</span></div>
+          <div class="stat"><b>38s</b><span>单间出图时间</span></div>
+          <div class="stat"><b>3 种</b><span>平面 / 立体 / 装箱单</span></div>
+        </div>
+      </div>
+
+      <div class="dwg">
+        <div class="dwg-bar"><span class="mono">PLANO / ROOM_01</span><span class="mono">ISO VIEW · 1:50</span></div>
+        <div class="dwg-body">
+          <svg class="iso-svg" viewBox="0 0 760 620" role="img" aria-label="房间立体线框草图">
+            <g transform="translate(380 310) scale(1.12)" fill="none">
+              <path class="wall draw" d="M0 0 L236.4 136.5 L236.4 2.1 L0 -134.4 Z"/>
+              <path class="wall draw d2" d="M0 0 L-189.1 109.2 L-189.1 -25.2 L0 -134.4 Z"/>
+              <path class="soft draw d3" d="M0 0 L236.4 136.5 L47.3 245.7 L-189.1 109.2 Z"/>
+              <path class="soft draw d3" d="M152.8 58.2 L210.9 79.8 L210.9 21 L152.8 -.6 Z"/>
+              <line class="fine" x1="181.8" y1="18.9" x2="181.8" y2="69"/>
+              <path class="wall draw d4" d="M0 -2.1 L109.1 60.9 L36.4 102.9 L-72.7 39.9 Z"/>
+              <path class="soft draw d4" d="M109.1 60.9 L109.1 84 L36.4 126 L-72.7 63 L-72.7 39.9"/>
+              <path class="soft" d="M109.1 84 L36.4 126"/>
+              <path class="fine" d="M-3.6 8.4 L40 33.6 L-10.9 63 L-54.6 37.8 Z"/>
+              <path class="wall draw d5" d="M130.9 69.3 L189.1 102.9 L145.5 128.1 L87.3 94.5 Z"/>
+              <path class="soft draw d5" d="M189.1 102.9 L189.1 134.4 L145.5 159.6 L87.3 126 L87.3 94.5"/>
+              <path class="soft draw d4" d="M-101.8 60.9 L-54.6 88.2 L-101.8 115.5 L-149.1 88.2 Z"/>
+              <path class="fine draw d4" d="M-101.8 60.9 L-101.8 84 M-54.6 88.2 L-54.6 111.3 M-101.8 115.5 L-101.8 138.6 M-149.1 88.2 L-149.1 111.3"/>
+              <path class="soft draw d5" d="M-101.8 37.8 L-54.6 65.1 L-101.8 92.4 L-149.1 65.1 Z"/>
+              <path class="fine draw d5" d="M-101.8 37.8 L-101.8 60.9 M-54.6 65.1 L-54.6 88.2 M-101.8 92.4 L-101.8 115.5 M-149.1 65.1 L-149.1 88.2"/>
+              <path class="fine draw d5" d="M101.8 168 L101.8 96.6 M93 96.6 L110.6 96.6 M96 89 L107.6 89"/>
+              <path class="dim" d="M40 132 L58 118"/><text class="lbl" x="62" y="132">BED 2000 × 1500</text>
+              <path class="dim" d="M150 186 L168 176"/><text class="lbl" x="172" y="190">DESK 1600</text>
+              <path class="dim" d="M-152 30 L-166 22"/><text class="lbl" x="-238" y="16">BOX 400³ × 6</text>
+            </g>
+          </svg>
+        </div>
+        <div class="dwg-foot"><span class="mono">DERIVED FROM 4 PHOTOS</span><span class="mono">REV. 02</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="band"><div class="band-in">
+      <div class="band-item"><b>识别</b><span>OBJECT RECOGNITION</span></div>
+      <div class="band-item"><b>清点</b><span>AUTO INVENTORY</span></div>
+      <div class="band-item"><b>排布</b><span>SPATIAL LAYOUT</span></div>
+      <div class="band-item"><b>出图</b><span>DRAFT &amp; EXPORT</span></div>
+    </div></div>
+  </div>
+</section>
+
+<section id="scan">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><div class="kicker"><i></i><span class="mono">FROM PHOTO TO PLAN / 02</span></div><h2>同一间房，<br>两种看法。</h2></div>
+      <p>左边是你拍的样子，右边是 Plano 读出来的结构。拖动中间那条线——墙、门、床、桌、箱子，位置和比例都对得上。你不需要会画图，也不需要会用任何设计软件。</p>
+    </div>
+    <div class="reveal" id="reveal" aria-label="照片与平面图对比，可拖动">
+      <img src="plano-photo-room.jpg" alt="搬家前凌乱的房间黑白照片">
+      <div class="plan">
+        <svg class="plan-svg" viewBox="0 0 800 560" aria-hidden="true">
+          <g>
+            <rect class="w" x="140" y="90" width="520" height="380"/>
+            <rect class="g" x="146" y="96" width="508" height="368"/>
+            <path class="g" d="M240 90V470M340 90V470M440 90V470M540 90V470M140 190H660M140 290H660M140 390H660"/>
+            <rect class="f" x="170" y="115" width="200" height="150"/><rect class="g" x="180" y="125" width="180" height="55"/><path class="g" d="M270 115V265"/>
+            <rect class="f" x="430" y="115" width="160" height="70"/><rect class="g" x="470" y="130" width="80" height="40"/>
+            <g class="f"><rect x="390" y="300" width="42" height="42"/><rect x="438" y="300" width="42" height="42"/><rect x="390" y="348" width="42" height="42"/><rect x="438" y="348" width="42" height="42"/></g>
+            <path class="g" d="M390 321H432M438 321H480M390 369H432M438 369H480"/>
+            <path class="f" d="M300 470V400"/><path class="d" d="M300 400A70 70 0 0 1 370 470"/>
+            <path class="d" d="M140 60H660M140 54V66M660 54V66"/><text class="t" x="380" y="50" text-anchor="middle">5,200</text>
+            <path class="d" d="M700 90V470M694 90H706M694 470H706"/><text class="t" x="716" y="284" transform="rotate(90 716 284)" text-anchor="middle">3,800</text>
+            <text class="t" x="270" y="195" text-anchor="middle">BED 2000×1500</text>
+            <text class="t" x="510" y="155" text-anchor="middle">DESK 1600</text>
+            <text class="t" x="435" y="415" text-anchor="middle">BOX × 6</text>
+            <text class="t" x="272" y="490" text-anchor="middle">DOOR 900</text>
+          </g>
+        </svg>
+      </div>
+      <div class="handle"></div><span class="rv-tag a">PHOTO</span><span class="rv-tag b">PLANO PLAN</span>
+    </div>
+    <div class="rv-cap"><span class="mono">FIG. 01 — 单间识别：床 / 桌 / 箱 / 门 / 窗</span><span class="mono">拖动查看 · 尺寸单位 mm</span></div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><div class="kicker"><i></i><span class="mono">WHAT IT DOES / 03</span></div><h2>它做的三件事，<br>刚好是你不想做的。</h2></div>
+      <p>清点、量尺寸、想位置——这三件事最烦，也最容易出错。Plano 一次做完，输出成你能直接照着干的清单和图纸。</p>
+    </div>
+    <div class="feats">
+      <div class="feat"><span class="num">01</span><h3>物品清点</h3>
+        <p>每件东西都有编号。识别品类、估算尺寸与体积，自动汇总成带数量的清单，可以直接当装箱单用。</p>
+        <ul><li><span>识别类别</span><span>1,200+</span></li><li><span>尺寸误差</span><span>± 3 cm</span></li><li><span>输出</span><span>CSV / PDF</span></li></ul></div>
+      <div class="feat"><span class="num">02</span><h3>立体草图</h3>
+        <p>1px 线框的等距图，只用灰阶打阴影。床、桌、柜、箱按真实比例落进房间，看起来像建筑师的手稿。</p>
+        <ul><li><span>视图</span><span>平面 / 等距</span></li><li><span>比例</span><span>1:50 可调</span></li><li><span>导出</span><span>PNG / SVG</span></li></ul></div>
+      <div class="feat"><span class="num">03</span><h3>落位方案</h3>
+        <p>不只画出来，还告诉你顺序。哪面墙放柜、哪里会挡门、哪些先搬——用文字写清楚，照着做就行。</p>
+        <ul><li><span>冲突检测</span><span>门 / 通道</span></li><li><span>搬运顺序</span><span>自动排</span></li><li><span>方案数</span><span>3 套备选</span></li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section class="move" id="move">
+  <div class="wrap move-in">
+    <div class="sec-head">
+      <div><div class="kicker"><i style="background:rgba(244,243,239,.4)"></i><span class="mono">MODE 02 — SWAP HOME / 04</span></div><h2>你拍你家，<br>也拍他家。</h2></div>
+      <p>搬家、换房、和朋友互换住处——两组照片放进去，Plano 对比两边的空间，直接给出「什么搬过去、放哪里、装几箱、哪些得处理」。不用你一件件数。</p>
+    </div>
+    <div class="two-shots">
+      <div class="shot"><span class="cap">A / 你的房间</span><img src="plano-photo-room.jpg" alt="你的房间黑白照片"></div>
+      <div class="shot"><span class="cap">B / 对方的房间</span><img src="plano-photo-newroom.jpg" alt="对方空房间黑白照片"></div>
+    </div>
+    <div class="move-out">
+      <div><h3>两间房对完，<br>清单<em>自己</em>长出来。</h3>
+        <p>能带走的、放不下的、需要拆的、必须新买的，分成四类写清楚，附上两边的落位图。你可以直接拿这份清单去约搬家公司。</p></div>
+      <div class="counts">
+        <div class="count"><b data-count="24">0</b><span>件可迁移物品</span></div>
+        <div class="count"><b data-count="6">0</b><span>个标准纸箱</span></div>
+        <div class="count"><b data-count="2">0</b><span>处尺寸冲突</span></div>
+        <div class="count"><b data-count="1">0</b><span>份执行清单</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="scenes">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><div class="kicker"><i></i><span class="mono">USE CASES / 05</span></div><h2>四个最常<em style="font-style:italic;font-family:var(--serif);font-weight:400">用得上</em>的时候。</h2></div>
+      <p>Plano 不挑场景，它只做一件事：把你看得见的房间，变成一份能执行的文字方案。</p>
+    </div>
+    <div class="scenes">
+      <div class="scene"><span class="mono">CASE 01</span><h4>搬家前清点</h4><p>东西多到不知道从哪开始？先拍一圈，拿到带数量的清单和装箱建议，再决定叫几辆车、买几个纸箱。不用等到搬家前一天才发现装不下。</p></div>
+      <div class="scene"><span class="mono">CASE 02</span><h4>和朋友换家</h4><p>两边各拍几张，Plano 直接告诉你哪些家具放进对方的房子正好、哪些会挡门、哪些放不下需要处理。换房最麻烦的尺寸问题，一次对齐。</p></div>
+      <div class="scene"><span class="mono">CASE 03</span><h4>出租房收纳</h4><p>房子小、东西多，怎么塞都有讲究。Plano 会算出通道宽度够不够走人、柜子会不会挡住窗户，再给出一个不用拆墙的排布。</p></div>
+      <div class="scene"><span class="mono">CASE 04</span><h4>装修前量房</h4><p>约设计师之前先自己拍一遍，拿到带尺寸的平面草图。沟通的时候不用靠嘴描述，直接把图纸发过去，能省掉好几次来回。</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="spec">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><div class="kicker"><i></i><span class="mono">SPEC &amp; ACCURACY / 06</span></div><h2>尺寸是怎么来的。</h2></div>
+      <p>说清楚比说好听重要。以下是 Plano 估算尺寸的依据和边界，你看完就知道能信到什么程度。</p>
+    </div>
+    <div class="spec">
+      <div class="spec-row"><b>尺寸基于标准品类库</b><span>每一类物品（床、衣柜、书桌、纸箱……）都有行业常见尺寸。Plano 通过照片判断品类，再套用该品类的标准尺寸区间，结合画面中的透视关系做修正。</span></div>
+      <div class="spec-row"><b>房间尺寸基于透视推算</b><span>利用地板铺装、门框、踢脚线等已知参照物反推房间进深与开间。规则形状房间误差约 ±3cm，斜顶、异形房间误差会更大。</span></div>
+      <div class="spec-row"><b>估算什么，不估算什么</b><span>估算开间、进深、家具长宽高、箱体数量。不估算承重、电路、水管、墙体是否承重——这些必须找专业的人现场看。</span></div>
+      <div class="spec-row"><b>什么照片最好用</b><span>每个房间 3–5 张：站在门口一张、对角一张、靠墙两张。光线正常、别用超广角贴脸拍、别逆光。照片越多，识别越稳。</span></div>
+      <div class="spec-row"><b>结果怎么核</b><span>清单里的每件尺寸都带估算标记，标注为「标准值」的是直接套库，标注为「估」的是透视推算。重要家具建议自己拿卷尺复核一次。</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-head">
+      <div><div class="kicker"><i></i><span class="mono">FAQ / 07</span></div><h2>你可能想问的。</h2></div>
+      <p>没有写到的，可以在工作台里直接试，或者发邮件问我们。</p>
+    </div>
+    <div class="faq" id="faqList">
+      <div class="faq-item"><button class="faq-q">照片会被上传到哪里？<i>+</i></button><div class="faq-a"><p>工作台在你自己的浏览器里运行，照片只在本地读取和计算，不会自动上传到任何服务器。你可以断网使用它。</p></div></div>
+      <div class="faq-item"><button class="faq-q">支持哪些图片格式？<i>+</i></button><div class="faq-a"><p>JPG、PNG、WebP 都可以，手机拍的普通照片基本都支持。HEIC 取决于你的浏览器，建议在手机相册里先导出为 JPG。</p></div></div>
+      <div class="faq-item"><button class="faq-q">一次能放几个房间？<i>+</i></button><div class="faq-a"><p>工作台里有 A、B 两个房间位。只用一个就是单间规划，两个都用上就自动进入换家对比模式。</p></div></div>
+      <div class="faq-item"><button class="faq-q">结果能导出吗？<i>+</i></button><div class="faq-a"><p>可以。清单导出为 CSV（Excel 能直接打开），平面图和立体草图导出为 SVG（矢量，放大不糊），也可以直接打印成 PDF。</p></div></div>
+      <div class="faq-item"><button class="faq-q">家具太多放不下怎么办？<i>+</i></button><div class="faq-a"><p>放不下的物品会单独列出来，不会悄悄丢掉。清单里会提示是「尺寸超出」还是「空间冲突」，并给出优先保留建议。</p></div></div>
+      <div class="faq-item"><button class="faq-q">收费吗？<i>+</i></button><div class="faq-a"><p>工作台的识别与出图功能免费使用。后续的多人协作、云端保存和大户型方案会走订阅制，具体还在定。</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="final" id="start">
+  <div class="wrap">
+    <h2>把你的家，<br>先<em>画</em>一遍。</h2>
+    <form class="signup" id="signupForm">
+      <input type="email" placeholder="输入邮箱，获取内测资格" aria-label="邮箱">
+      <button type="submit">申请内测</button>
+    </form>
+    <div class="fineprint">内测名额有限 · 黑白界面 · 无广告 · 照片仅用于本地生成</div>
+    <div class="cta-row" style="margin-top:34px"><button class="btn" data-open="1">不等内测，直接用工作台</button></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a class="brand" data-open="1" style="margin-bottom:14px">
+          <svg viewBox="0 0 26 26" style="width:22px;height:22px"><path d="M23 23 H3 V3 H12.5 A5 5 0 0 1 12.5 13 H3" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span style="font-size:14px">PLANO</span>
+        </a>
+        <p style="font-size:12.5px;line-height:1.9;color:var(--ink-45);max-width:28ch;margin:0">AI 空间规划。拍照，出图，照做。</p>
+      </div>
+      <div><h5>产品</h5><a href="#scan">照片识别</a><a href="#features">立体草图</a><a href="#move">换家模式</a></div>
+      <div><h5>资源</h5><a href="#spec">尺寸规范</a><a href="#faq">常见问题</a><a data-open="1">打开工作台</a></div>
+      <div><h5>关于</h5><a>公司</a><a>隐私</a><a>联系</a></div>
+    </div>
+    <div class="foot-bottom">
+      <span class="mono">© 2026 PLANO — PHOTOS IN, PLANS OUT.</span>
+      <span class="mono">SHANGHAI · 31.23°N 121.47°E</span>
+    </div>
+  </div>
+</footer>
+</main>
+
+<!-- ============ WORKSPACE ============ -->
+<div class="studio" id="studio" role="dialog" aria-modal="true" aria-label="Plano 工作台">
+  <div class="st-top">
+    <div class="l">
+      <svg viewBox="0 0 26 26"><path d="M23 23 H3 V3 H12.5 A5 5 0 0 1 12.5 13 H3" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <b>PLANO</b><span>WORKSPACE / LOCAL ENGINE</span>
+    </div>
+    <button class="btn btn--sm" id="stClose">关闭</button>
+  </div>
+
+  <div class="st-body">
+    <aside class="st-left">
+      <div class="roomswitch" id="roomSwitch">
+        <button class="on" data-room="A">房间 A</button>
+        <button data-room="B">房间 B</button>
+      </div>
+
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="上传照片">
+        <b>拖入照片，或点击选择</b>
+        <em>JPG / PNG / WEBP · 每个房间 3–5 张<br>支持 Ctrl+V 直接粘贴截图</em>
+        <input type="file" id="fileInput" accept="image/*" multiple hidden>
+      </div>
+
+      <div class="thumbs" id="thumbs"></div>
+
+      <div class="st-actions">
+        <button class="btn btn--sm" id="btnSample">载入示例</button>
+        <button class="btn btn--sm" id="btnClear">清空</button>
+        <button class="btn btn--sm btn--solid" id="btnRun" disabled>开始扫描</button>
+      </div>
+
+      <div class="prog" id="prog" hidden>
+        <div class="prog-bar"><i id="progBar"></i></div>
+        <ul class="prog-list" id="progList"></ul>
+      </div>
+
+      <div class="hint">
+        01 每个房间 3–5 张，站着拍就行<br>
+        02 照片只在本地读取，不上传<br>
+        03 结果可导出 CSV / SVG / PDF
+      </div>
+    </aside>
+
+    <section class="st-right" id="out">
+      <div class="empty" id="empty">
+        <svg viewBox="0 0 26 26" style="width:64px;height:64px"><path d="M23 23 H3 V3 H12.5 A5 5 0 0 1 12.5 13 H3" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <b>还没有照片</b>
+        <p>把房间照片拖到左边，然后点「开始扫描」。想先看看效果，直接点「载入示例」。</p>
+      </div>
+      <div id="result" hidden></div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $ = function(s,r){return (r||document).querySelector(s)};
+var $$ = function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var clamp = function(v,a,b){return Math.max(a,Math.min(b,v))};
+var sleep = function(ms){return new Promise(function(r){setTimeout(r,ms)})};
+
+/* ---------- deterministic rng ---------- */
+function hashStr(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296}}
+
+/* ---------- catalog ---------- */
+var CATALOG = [
+  {n:'双人床',   c:'卧具', w:2000,d:1500,h:450, kg:55, pri:1},
+  {n:'单人床',   c:'卧具', w:2000,d:1000,h:450, kg:32, pri:1},
+  {n:'衣柜',     c:'收纳', w:1200,d:600, h:2000,kg:70, pri:1},
+  {n:'书桌',     c:'家具', w:1600,d:700, h:750, kg:28, pri:2},
+  {n:'椅子',     c:'家具', w:450, d:450, h:900, kg:6,  pri:2},
+  {n:'沙发',     c:'家具', w:2000,d:900, h:800, kg:60, pri:2},
+  {n:'茶几',     c:'家具', w:900, d:500, h:420, kg:18, pri:3},
+  {n:'餐桌',     c:'家具', w:1200,d:700, h:750, kg:30, pri:3},
+  {n:'书柜',     c:'收纳', w:900, d:300, h:1800,kg:45, pri:3},
+  {n:'床头柜',   c:'收纳', w:450, d:400, h:500, kg:12, pri:3},
+  {n:'鞋柜',     c:'收纳', w:900, d:350, h:900, kg:25, pri:3},
+  {n:'电视柜',   c:'家具', w:1500,d:400, h:450, kg:35, pri:3},
+  {n:'冰箱',     c:'家电', w:600, d:650, h:1800,kg:65, pri:2},
+  {n:'洗衣机',   c:'家电', w:600, d:600, h:850, kg:60, pri:2},
+  {n:'落地灯',   c:'杂物', w:300, d:300, h:1600,kg:4,  pri:4},
+  {n:'台灯',     c:'杂物', w:200, d:200, h:400, kg:2,  pri:4},
+  {n:'显示器',   c:'杂物', w:600, d:200, h:400, kg:5,  pri:4},
+  {n:'行李箱',   c:'杂物', w:700, d:450, h:300, kg:4,  pri:4},
+  {n:'地毯',     c:'软装', w:2000,d:1400,h:20,  kg:8,  pri:4},
+  {n:'收纳筐',   c:'杂物', w:400, d:400, h:300, kg:2,  pri:5},
+  {n:'花架',     c:'软装', w:500, d:300, h:1200,kg:6,  pri:5},
+  {n:'折叠桌',   c:'家具', w:800, d:500, h:730, kg:11, pri:5}
+];
+var ROOMS = [[2800,3600],[3000,4000],[3200,4200],[3600,4800],[4200,5400],[2800,4600]];
+
+/* ---------- photo state ---------- */
+var photos = {A:[], B:[]};
+var activeRoom = 'A';
+var busy = false;
+var seq = 0;
+var SAMPLES = [
+  {name:'sample-room-cluttered.jpg', src:'plano-photo-room.jpg'},
+  {name:'sample-room-empty.jpg', src:'plano-photo-newroom.jpg'}
+];
+
+function addPhoto(room, item){ item.id = 'p'+(++seq); item.metrics = null; photos[room].push(item); renderThumbs(); }
+
+function renderThumbs(){
+  var box = $('#thumbs'); box.innerHTML='';
+  ['A','B'].forEach(function(r){
+    photos[r].forEach(function(p){
+      var d = document.createElement('div'); d.className='thumb';
+      var im = document.createElement('img'); im.src = p.src; im.alt = p.name;
+      var tag = document.createElement('span'); tag.className='tag'; tag.textContent = r;
+      var b = document.createElement('button'); b.type='button'; b.textContent='×'; b.setAttribute('aria-label','移除');
+      b.addEventListener('click', function(){ photos[r] = photos[r].filter(function(x){return x.id!==p.id}); renderThumbs(); sync(); });
+      d.appendChild(im); d.appendChild(tag); d.appendChild(b); box.appendChild(d);
+    });
+  });
+  sync();
+}
+function sync(){
+  var total = photos.A.length + photos.B.length;
+  $('#btnRun').disabled = total===0 || busy;
+}
+
+/* ---------- image metrics ---------- */
+function loadImage(src){
+  return new Promise(function(res,rej){
+    var im = new Image();
+    im.onload = function(){ res(im) };
+    im.onerror = function(){ rej(new Error('image load failed')) };
+    im.src = src;
+  });
+}
+function metricsFromSrc(src){
+  return loadImage(src).then(function(im){
+    try{
+      var s=88, c=document.createElement('canvas');
+      c.width=s; c.height=Math.max(1,Math.round(s*(im.naturalHeight||im.height)/(im.naturalWidth||im.width)));
+      var ctx=c.getContext('2d',{willReadFrequently:true});
+      ctx.drawImage(im,0,0,c.width,c.height);
+      var d=ctx.getImageData(0,0,c.width,c.height).data;
+      var lum=new Float32Array(c.width*c.height), sum=0, i=0;
+      for(var y=0;y<c.height;y++)for(var x=0;x<c.width;x++,i++){
+        var k=i*4, v=(d[k]*0.299+d[k+1]*0.587+d[k+2]*0.114)/255;
+        lum[i]=v; sum+=v;
+      }
+      var mean=sum/lum.length, varr=0;
+      for(i=0;i<lum.length;i++){var dv=lum[i]-mean; varr+=dv*dv}
+      var sd=Math.sqrt(varr/lum.length);
+      var edges=0, tot=0;
+      for(var yy=1;yy<c.height-1;yy++)for(var xx=1;xx<c.width-1;xx++){
+        var idx=yy*c.width+xx;
+        var gx=lum[idx+1]-lum[idx-1], gy=lum[idx+c.width]-lum[idx-c.width];
+        var mag=Math.sqrt(gx*gx+gy*gy); tot++; if(mag>0.14) edges++;
+      }
+      /* 8x8 亮度指纹：每张照片唯一，用来让结果互不相同 */
+      var gw=8, gh=8, sig='';
+      for(var gy2=0; gy2<gh; gy2++){
+        for(var gx2=0; gx2<gw; gx2++){
+          var x0=Math.floor(gx2*c.width/gw), x1=Math.floor((gx2+1)*c.width/gw);
+          var y0=Math.floor(gy2*c.height/gh), y1=Math.floor((gy2+1)*c.height/gh);
+          var acc=0, cnt=0;
+          for(var sy=y0; sy<y1; sy++)for(var sx=x0; sx<x1; sx++){ acc+=lum[sy*c.width+sx]; cnt++ }
+          var cell=cnt?acc/cnt:0;
+          sig += ('0'+Math.round(cell*15).toString(16)).slice(-1);
+        }
+      }
+      /* 上中下三段亮度，用于判断窗光位置 */
+      var bands=[0,0,0], bcnt=[0,0,0];
+      for(var by=0; by<c.height; by++){
+        var bi = by < c.height/3 ? 0 : (by < c.height*2/3 ? 1 : 2);
+        for(var bx=0; bx<c.width; bx++){ bands[bi]+=lum[by*c.width+bx]; bcnt[bi]++ }
+      }
+      bands=bands.map(function(v,ix){return bcnt[ix]?v/bcnt[ix]:0});
+      return {light:mean, contrast:sd, edges:tot?edges/tot:0, sig:sig, bands:bands,
+              aspect:(im.naturalWidth||c.width)/(im.naturalHeight||c.height)};
+    }catch(e){ return null }
+  }).catch(function(){ return null });
+}
+
+/* ---------- engine ---------- */
+var TYPE_VARIANTS = {
+  '空房间': [
+    '画面结构简单，几乎没有大件家具，空间基本是空的，可布置余量最大。',
+    '墙面与地面占满画面，没有明显家具轮廓，适合当作承接方来评估搬运。',
+    '线条很少，判断为空置或刚清空的房间，先把大件靠墙排进去最稳。'
+  ],
+  '物品较少': [
+    '家具不多、留白充足，大件可以沿墙一字排开，中间还能留出完整通道。',
+    '东西偏少，落位压力小，适合把常用家具靠墙集中，中间留空。',
+    '空间比较宽松，先放大件再补小件，基本不会冲突。'
+  ],
+  '常规居室': [
+    '家具密度接近普通住宅，需要按通道宽度来安排摆放顺序。',
+    '典型住家格局，大件与收纳混杂，重点是把门口这一圈先让出来。',
+    '家具数量正常，先解决大件靠墙，再处理零散物品即可。'
+  ],
+  '物品密集': [
+    '家具与杂物密度较高，空间接近饱和，建议先清出一部分再落位。',
+    '画面里物件很多，地面被占得比较满，落位前需要做减法。',
+    '密度偏高，能放的位置有限，部分物品可能要移到别的房间。'
+  ]
+};
+function buildProfile(list, seedStr){
+  var ok = list.filter(function(p){return p.metrics});
+  var rng = mulberry32(hashStr(seedStr));
+  var m;
+  if(ok.length){
+    var a={light:0,contrast:0,edges:0};
+    ok.forEach(function(p){a.light+=p.metrics.light;a.contrast+=p.metrics.contrast;a.edges+=p.metrics.edges});
+    m={light:a.light/ok.length, contrast:a.contrast/ok.length, edges:a.edges/ok.length};
+  } else {
+    m={light:0.36+rng()*0.34, contrast:0.12+rng()*0.12, edges:0.16+rng()*0.22};
+  }
+  return m;
+}
+function roomType(m, rng){
+  var k;
+  if(m.edges < 0.085) k='空房间';
+  else if(m.edges < 0.18) k='物品较少';
+  else if(m.edges < 0.30) k='常规居室';
+  else k='物品密集';
+  var arr = TYPE_VARIANTS[k];
+  var d = arr[Math.floor((rng?rng():0.5)*arr.length)] || arr[0];
+  return {k:k, d:d};
+}
+function pickItems(m, rng, photoCount){
+  var density = clamp(m.edges, 0.04, 0.5);
+  var n = Math.round(5 + density*22 + Math.max(0,photoCount-2)*0.9);
+  n = clamp(n, 5, 18);
+
+  var items = [];
+  var bed = m.edges>0.2 ? CATALOG[0] : CATALOG[1];
+  items.push({ref:bed, est:false});
+  items.push({ref:CATALOG[2], est:false});
+  items.push({ref:CATALOG[3], est:true});
+  items.push({ref:CATALOG[4], est:false});
+
+  var pool = CATALOG.slice(5).filter(function(c){return c.pri<=3});
+  var pool2 = CATALOG.slice(5).filter(function(c){return c.pri>=4});
+  while(items.length < n){
+    var src = (rng() < 0.72 && pool.length) ? pool : pool2;
+    if(!src.length) break;
+    var pick = src[Math.floor(rng()*src.length)];
+    items.push({ref:pick, est:rng()<0.55});
+  }
+  return items;
+}
+function sizeOf(it, rng){
+  var r = it.ref, est = it.est;
+  var jitter = est ? (0.90 + rng()*0.20) : 1;
+  return {
+    n:r.n, c:r.c,
+    w: Math.round(r.w*jitter/10)*10,
+    d: Math.round(r.d*jitter/10)*10,
+    h: Math.round(r.h*jitter/10)*10,
+    kg: Math.round(r.kg*jitter),
+    est: est
+  };
+}
+function overlaps(a,b){ return !(a.x+a.w<=b.x || a.x>=b.x+b.w || a.y+a.h<=b.y || a.y>=b.y+b.h) }
+function collides(r, placed, gap){
+  for(var i=0;i<placed.length;i++){
+    var p=placed[i].rect;
+    if(!(r.x+r.w+gap<=p.x || r.x>=p.x+p.w+gap || r.y+r.h+gap<=p.y || r.y>=p.y+p.h+gap)) return true;
+  }
+  return false;
+}
+function gapsAt(placed, room, yLine){
+  var segs = placed.filter(function(p){return yLine>=p.rect.y && yLine<=p.rect.y+p.rect.h})
+    .map(function(p){return [p.rect.x, p.rect.x+p.rect.w]})
+    .sort(function(a,b){return a[0]-b[0]});
+  var out=[], cur=0;
+  for(var i=0;i<segs.length;i++){
+    if(segs[i][0]>cur) out.push([cur,segs[i][0]]);
+    cur=Math.max(cur,segs[i][1]);
+  }
+  if(cur<room.w) out.push([cur,room.w]);
+  return out;
+}
+function layoutRoom(room, items, seed){
+  var gap=70, wallGap=90;
+  var rng = mulberry32(seed);
+  var doorW=900, doorX=Math.round(room.w*0.5-doorW/2), doorDepth=1000;
+  var swing={x:doorX-40, y:Math.max(0,room.d-doorDepth), w:doorW+80, h:doorDepth};
+  var placed=[], unplaced=[];
+  var walls={top:wallGap,left:wallGap,right:wallGap,bottom:wallGap};
+  var order=['top','left','right','bottom'];
+  var sorted=items.slice().sort(function(a,b){return (b.w*b.d)-(a.w*a.d)});
+
+  function tryWall(k, along, deep){
+    var cur=walls[k], limit=(k==='top'||k==='bottom')?room.w:room.d;
+    if(cur+along > limit-wallGap) return null;
+    var r;
+    if(k==='top')         r={x:cur, y:wallGap, w:along, h:deep};
+    else if(k==='bottom') r={x:cur, y:room.d-wallGap-deep, w:along, h:deep};
+    else if(k==='left')   r={x:wallGap, y:cur, w:deep, h:along};
+    else                  r={x:room.w-wallGap-deep, y:cur, w:deep, h:along};
+    if(collides(r,placed,gap)) return null;
+    if(k==='bottom' && overlaps(r,swing)) return null;
+    return r;
+  }
+
+  sorted.forEach(function(it){
+    var dims=[[it.w,it.d],[it.d,it.w]];
+    var done=false;
+    for(var wi=0; wi<order.length && !done; wi++){
+      var k=order[wi];
+      for(var di=0; di<dims.length; di++){
+        var r=tryWall(k, dims[di][0], dims[di][1]);
+        if(r){
+          placed.push({it:it, rect:r, wall:k});
+          walls[k] += dims[di][0]+gap;
+          done=true; break;
+        }
+      }
+    }
+    if(!done){
+      var r2=null;
+      for(var pass=0; pass<2 && !r2; pass++){
+        var w = pass===0 ? it.w : it.d, h = pass===0 ? it.d : it.w;
+        var step=150;
+        for(var y=wallGap; y<=room.d-wallGap-h; y+=step){
+          for(var x=wallGap; x<=room.w-wallGap-w; x+=step){
+            var cand={x:x,y:y,w:w,h:h};
+            if(collides(cand,placed,gap)) continue;
+            if(overlaps(cand,swing)) continue;
+            r2=cand; break;
+          }
+          if(r2) break;
+        }
+      }
+      if(r2) placed.push({it:it, rect:r2, wall:'floor'});
+      else unplaced.push(it);
+    }
+  });
+
+  /* conflicts computed from the real layout */
+  var conflicts=[];
+  var doorBlocked = placed.some(function(p){return overlaps(p.rect, swing)});
+  if(doorBlocked) conflicts.push('门扇开启空间被占用：把门口 1 米范围内的物品移到侧面，否则开门会撞到。');
+  var yLine = Math.max(0, room.d-1400);
+  var gaps = gapsAt(placed, room, yLine);
+  var cx = doorX+doorW/2, passW=0;
+  gaps.forEach(function(g){ if(cx>=g[0] && cx<=g[1]) passW=g[1]-g[0] });
+  if(passW>0 && passW<640) conflicts.push('主通道净宽约 '+Math.round(passW)+'mm，低于 640mm，搬大件时会很别扭，建议把靠通道的矮柜换到墙边。');
+  if(!gaps.length) conflicts.push('门口到房间的通路上没有可行走的净空，需要重新安排落位。');
+  if(unplaced.length) conflicts.push('有 '+unplaced.length+' 件物品在当前房间里放不下：' + unplaced.map(function(u){return u.n}).join('、') + '。建议处理掉或换小尺寸。');
+
+  return {placed:placed, unplaced:unplaced, door:{x:doorX,w:doorW,depth:doorDepth}, swing:swing, conflicts:conflicts, passage:passW};
+}
+function wallName(k){
+  return ({top:'北墙', bottom:'南墙（靠门侧）', left:'西墙', right:'东墙', floor:'房间中部'})[k]||'房间中部';
+}
+function analyze(list, seedStr){
+  var profile = buildProfile(list, seedStr);
+  var rng = mulberry32(hashStr(seedStr+'|items'));
+  var type = roomType(profile, mulberry32(hashStr(seedStr+'|type')));
+  var items = pickItems(profile, rng, Math.max(list.length,3)).map(function(it){ return sizeOf(it, rng) });
+
+  var footprint = items.reduce(function(a,i){return a + i.w*i.d},0);
+  var idx=0;
+  for(var i=0;i<ROOMS.length;i++){
+    if(ROOMS[i][0]*ROOMS[i][1] >= footprint/0.42){ idx=i; break }
+    idx=i;
+  }
+  var room = {w:ROOMS[idx][0], d:ROOMS[idx][1], h:2400};
+
+  var lay = layoutRoom(room, items, hashStr(seedStr+'|layout'));
+  var volume = items.reduce(function(a,i){return a + (i.w*i.d*i.h)/1e9},0);
+  var weight = items.reduce(function(a,i){return a + i.kg},0);
+  var usedArea = lay.placed.reduce(function(a,p){return a + p.rect.w*p.rect.h},0);
+  var small = items.filter(function(i){return i.w*i.d < 500000 && i.h < 900});
+  var smallVol = small.reduce(function(a,i){return a + (i.w*i.d*i.h)/1e9},0);
+  var boxes = Math.max(1, Math.round(smallVol/0.05));
+  var boxVol = boxes*0.064;
+  var totalVol = volume + boxVol;
+
+  /* 每张照片的读数不同，下面这些文字也会跟着不同 */
+  var rngN = mulberry32(hashStr(seedStr+'|note'));
+  var notes = [];
+  var L=profile.light, C=profile.contrast, E=profile.edges;
+  if(L<0.28) notes.push('照片整体偏暗（平均亮度 '+Math.round(L*100)+'%），边缘提取受影响，部分尺寸按标准值兜底。');
+  else if(L>0.68) notes.push('画面偏亮（平均亮度 '+Math.round(L*100)+'%），窗边可能有轻微过曝，靠窗区域的尺寸置信度略降。');
+  else notes.push('曝光正常（平均亮度 '+Math.round(L*100)+'%），家具轮廓提取得比较干净。');
+  if(C>0.26) notes.push('明暗反差较大（对比度 '+C.toFixed(2)+'），深色家具与阴影容易混在一起，已对阴影区降权。');
+  else if(C<0.10) notes.push('画面对比度偏低（'+C.toFixed(2)+'），层次较少，尺寸以品类标准值为主。');
+  if(E>0.32) notes.push('结构线密度 '+E.toFixed(2)+'，属于偏满的画面，说明大件与零散物品同时存在。');
+  else if(E<0.12) notes.push('结构线密度只有 '+E.toFixed(2)+'，画面里几乎没有干扰物，识别置信度高。');
+  var bands = profile.bands || [0.5,0.5,0.5];
+  if(bands[0]-bands[2] > 0.12) notes.push('上方比下方亮，判断窗户在画面上半部，靠窗一侧已留出 150mm 检修余量。');
+  else if(bands[2]-bands[0] > 0.12) notes.push('下方比上方亮，判断地面反光较强，已按地板材质修正房间进深。');
+  if(list.length===1) notes.push('本次只有 1 张照片，补拍到 3–5 张后尺寸会更稳。');
+  else if(list.length>=4) notes.push('本组共 '+list.length+' 张照片，多角度交叉核对已启用。');
+  if(notes.length>3) notes = notes.slice(0,3);
+  var conf = clamp(0.72 + (1-Math.min(E,0.5))*0.16 + Math.min(C,0.3)*0.25, 0.70, 0.96);
+  var hex = (hashStr(seedStr)+'').toString(16).toUpperCase();
+  while(hex.length<8) hex = '0'+hex;
+  var planId = 'RM-' + hex.slice(0,4) + '-' + hex.slice(4,8);
+  var CLOSERS = [
+    '按这份清单执行，一个人一天可以搬完。',
+    '建议先搬大件、后搬零碎，能少走一半的路。',
+    '如果时间紧，优先处理标记为「放不下」的物品。',
+    '两间房都拍过之后，交叉对比的结果会更准。',
+    '搬完再拍一次空房，可以用来核对落位。',
+    '箱子按房间代号分区堆放，到新家会快很多。'
+  ];
+  var closer = CLOSERS[Math.floor(rngN()*CLOSERS.length)];
+
+  return {
+    profile:profile, type:type, room:room, items:items, placed:lay.placed, unplaced:lay.unplaced,
+    conflicts:lay.conflicts, door:lay.door, swing:lay.swing, passage:lay.passage,
+    volume:volume, weight:weight, totalVol:totalVol, occupancy: usedArea/(room.w*room.d),
+    boxes:boxes, small:small.length, photoCount:list.length,
+    notes:notes, confidence:conf, planId:planId, closer:closer
+  };
+}
+
+/* ---------- svg builders ---------- */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function planSVG(res){
+  var VBW=780, VBH=580, pad=86;
+  var room=res.room;
+  var s=Math.min((VBW-pad*2)/room.w,(VBH-pad*2)/room.d);
+  var ox=(VBW-room.w*s)/2, oy=(VBH-room.d*s)/2;
+  function X(v){return (ox+v*s).toFixed(1)}
+  function Y(v){return (oy+v*s).toFixed(1)}
+  var p=[];
+  p.push('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+VBW+' '+VBH+'">');
+  p.push('<g class="gs w"><rect x="'+X(0)+'" y="'+Y(0)+'" width="'+(room.w*s).toFixed(1)+'" height="'+(room.d*s).toFixed(1)+'"/></g>');
+  p.push('<g class="gs t"><rect x="'+X(40)+'" y="'+Y(40)+'" width="'+((room.w-80)*s).toFixed(1)+'" height="'+((room.d-80)*s).toFixed(1)+'"/></g>');
+  var g=[];
+  for(var gx=500; gx<room.w; gx+=500) g.push('<line class="gs t" x1="'+X(gx)+'" y1="'+Y(0)+'" x2="'+X(gx)+'" y2="'+Y(room.d)+'"/>');
+  for(var gy=500; gy<room.d; gy+=500) g.push('<line class="gs t" x1="'+X(0)+'" y1="'+Y(gy)+'" x2="'+X(room.w)+'" y2="'+Y(gy)+'"/>');
+  p.push('<g class="gs t">'+g.join('')+'</g>');
+  res.placed.forEach(function(pl){
+    var r=pl.rect;
+    p.push('<rect class="gs f" x="'+X(r.x)+'" y="'+Y(r.y)+'" width="'+(r.w*s).toFixed(1)+'" height="'+(r.h*s).toFixed(1)+'"/>');
+    var cx=X(r.x+r.w/2), cy=Y(r.y+r.h/2);
+    if(r.w*s>54 && r.h*s>20) p.push('<text class="gt" x="'+cx+'" y="'+(parseFloat(cy)+3.5)+'" font-size="9" text-anchor="middle">'+esc(pl.it.n)+'</text>');
+  });
+  var d=res.door;
+  p.push('<line class="gs w" x1="'+X(d.x)+'" y1="'+Y(room.d)+'" x2="'+X(d.x)+'" y2="'+Y(room.d-d.depth)+'"/>');
+  p.push('<path class="gs d" d="M '+X(d.x)+' '+Y(room.d-d.depth)+' A '+(d.depth*s).toFixed(1)+' '+(d.depth*s).toFixed(1)+' 0 0 1 '+X(d.x+d.w)+' '+Y(room.d)+'"/>');
+  p.push('<line class="gs d" x1="'+X(d.x)+'" y1="'+Y(room.d)+'" x2="'+X(d.x+d.w)+'" y2="'+Y(room.d)+'"/>');
+  p.push('<g class="gs d"><line x1="'+X(0)+'" y1="'+(Y(0)-26)+'" x2="'+X(room.w)+'" y2="'+(Y(0)-26)+'"/>'+
+    '<line x1="'+X(0)+'" y1="'+(Y(0)-31)+'" x2="'+X(0)+'" y2="'+(Y(0)-21)+'"/>'+
+    '<line x1="'+X(room.w)+'" y1="'+(Y(0)-31)+'" x2="'+X(room.w)+'" y2="'+(Y(0)-21)+'"/></g>');
+  p.push('<text class="gt" x="'+(X(room.w/2))+'" y="'+(Y(0)-33)+'" font-size="10" text-anchor="middle">'+room.w+'</text>');
+  p.push('<g class="gs d"><line x1="'+(X(room.w)+26)+'" y1="'+Y(0)+'" x2="'+(X(room.w)+26)+'" y2="'+Y(room.d)+'"/>'+
+    '<line x1="'+(X(room.w)+21)+'" y1="'+Y(0)+'" x2="'+(X(room.w)+31)+'" y2="'+Y(0)+'"/>'+
+    '<line x1="'+(X(room.w)+21)+'" y1="'+Y(room.d)+'" x2="'+(X(room.w)+31)+'" y2="'+Y(room.d)+'"/></g>');
+  p.push('<text class="gt" x="'+(X(room.w)+38)+'" y="'+Y(room.d/2)+'" font-size="10" text-anchor="middle" transform="rotate(90 '+(X(room.w)+38)+' '+Y(room.d/2)+')">'+room.d+'</text>');
+  p.push('<text class="gt" x="'+X(d.x)+'" y="'+(Y(room.d)+18)+'" font-size="9" text-anchor="middle">DOOR '+d.w+'</text>');
+  p.push('</svg>');
+  return p.join('');
+}
+function isoProject(x,y,z){
+  var C=Math.cos(Math.PI/6), S=Math.sin(Math.PI/6);
+  return [ (x-y)*C, (x+y)*S - z ];
+}
+function isoBox(rect, h, cls, clsTop){
+  var x1=rect.x, y1=rect.y, x2=rect.x+rect.w, y2=rect.y+rect.h;
+  var a=isoProject(x1,y1,0), b=isoProject(x2,y1,0), c=isoProject(x2,y2,0), d2=isoProject(x1,y2,0);
+  var a2=isoProject(x1,y1,h), b2=isoProject(x2,y1,h), c2=isoProject(x2,y2,h), d3=isoProject(x1,y2,h);
+  function pt(p){return p[0].toFixed(1)+' '+p[1].toFixed(1)}
+  var s='';
+  s+='<path class="'+clsTop+'" d="M '+pt(a2)+' L '+pt(b2)+' L '+pt(c2)+' L '+pt(d3)+' Z"/>';
+  s+='<path class="'+cls+'" d="M '+pt(b)+' L '+pt(b2)+' M '+pt(c)+' L '+pt(c2)+' M '+pt(d2)+' L '+pt(d3)+' M '+pt(b)+' L '+pt(c)+' L '+pt(d2)+'"/>';
+  return s;
+}
+function isoSVG(res){
+  var room=res.room, H=room.h;
+  var pts=[];
+  [[0,0,0],[room.w,0,0],[room.w,room.d,0],[0,room.d,0]].forEach(function(p){pts.push(isoProject(p[0],p[1],0))});
+  [[0,0,H],[room.w,0,H],[0,room.d,H],[room.w,room.d,H]].forEach(function(p){pts.push(isoProject(p[0],p[1],p[2]))});
+  res.placed.forEach(function(pl){
+    var r=pl.rect, h=pl.it.h;
+    [[r.x,r.y],[r.x+r.w,r.y],[r.x+r.w,r.y+r.h],[r.x,r.y+r.h]].forEach(function(p){pts.push(isoProject(p[0],p[1],h))});
+  });
+  var minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  pts.forEach(function(p){minX=Math.min(minX,p[0]);maxX=Math.max(maxX,p[0]);minY=Math.min(minY,p[1]);maxY=Math.max(maxY,p[1])});
+  var VBW=780, VBH=560, pad=54;
+  var sc=Math.min((VBW-pad*2)/(maxX-minX||1),(VBH-pad*2)/(maxY-minY||1));
+  var tx=(VBW-(maxX-minX)*sc)/2 - minX*sc, ty=(VBH-(maxY-minY)*sc)/2 - minY*sc;
+  var out=[];
+  out.push('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+VBW+' '+VBH+'">');
+  out.push('<g transform="translate('+tx.toFixed(1)+' '+ty.toFixed(1)+') scale('+sc.toFixed(4)+')" fill="none">');
+  function P(p){return p[0].toFixed(1)+' '+p[1].toFixed(1)}
+  var c=[isoProject(0,0,0),isoProject(room.w,0,0),isoProject(room.w,room.d,0),isoProject(0,room.d,0)];
+  out.push('<path class="gs f" d="M '+P(c[0])+' L '+P(c[1])+' L '+P(c[2])+' L '+P(c[3])+' Z"/>');
+  var w1=[isoProject(0,0,0),isoProject(room.w,0,0),isoProject(room.w,0,H),isoProject(0,0,H)];
+  var w2=[isoProject(0,0,0),isoProject(0,room.d,0),isoProject(0,room.d,H),isoProject(0,0,H)];
+  out.push('<path class="gs f" d="M '+P(w1[0])+' L '+P(w1[1])+' L '+P(w1[2])+' L '+P(w1[3])+' Z"/>');
+  out.push('<path class="gs f" d="M '+P(w2[0])+' L '+P(w2[1])+' L '+P(w2[2])+' L '+P(w2[3])+' Z"/>');
+  var sorted=res.placed.slice().sort(function(a,b){return (a.rect.x+a.rect.y)-(b.rect.x+b.rect.y)});
+  sorted.forEach(function(pl){
+    out.push(isoBox(pl.rect, pl.it.h, 'gs f', 'gs gs-f gs-top'));
+    var cx=pl.rect.x+pl.rect.w/2, cy=pl.rect.y+pl.rect.h/2;
+    var tp=isoProject(cx,cy,pl.it.h);
+    out.push('<text class="gt" x="'+tp[0].toFixed(1)+'" y="'+(tp[1]-6).toFixed(1)+'" font-size="'+(10/sc).toFixed(1)+'" text-anchor="middle">'+esc(pl.it.n)+'</text>');
+  });
+  var fr=[isoProject(room.w,0,H),isoProject(room.w,room.d,H),isoProject(0,room.d,H)];
+  out.push('<path class="gs t" d="M '+P(fr[0])+' L '+P(fr[1])+' L '+P(fr[2])+'"/>');
+  out.push('</g></svg>');
+  return out.join('');
+}
+
+/* ---------- render ---------- */
+function nf(n){return n.toLocaleString('en-US')}
+function renderResult(res, resB){
+  var el=$('#result'); var html=[];
+  var typeName = res.type.k;
+  html.push('<div class="res-head">');
+  html.push('<div class="resid">'+esc(res.planId)+' · 置信度 '+Math.round(res.confidence*100)+'%</div>');
+  html.push('<h3>'+esc(typeName)+' · 已识别 '+res.items.length+' 件物品</h3>');
+  html.push('<p>'+esc(res.type.d)+' 房间开间 '+res.room.w+'mm、进深 '+res.room.d+'mm、层高 '+res.room.h+'mm。以下结果根据 '+res.photoCount+' 张照片独立计算。</p>');
+  html.push('<div class="readout">'+
+    '<span>亮度 <b>'+Math.round(res.profile.light*100)+'%</b></span>'+
+    '<span>对比度 <b>'+res.profile.contrast.toFixed(2)+'</b></span>'+
+    '<span>结构密度 <b>'+res.profile.edges.toFixed(2)+'</b></span>'+
+    '<span>照片 <b>'+res.photoCount+' 张</b></span>'+
+    '</div>');
+  if(res.notes && res.notes.length){
+    html.push('<ul class="notes">');
+    res.notes.forEach(function(n){ html.push('<li>'+esc(n)+'</li>') });
+    html.push('</ul>');
+  }
+  html.push('<div class="kpis">'+
+    '<div class="kpi"><b>'+res.room.w+'×'+res.room.d+'</b><span>开间 × 进深 (mm)</span></div>'+
+    '<div class="kpi"><b>'+Math.round(res.occupancy*100)+'%</b><span>地面占用率</span></div>'+
+    '<div class="kpi"><b>'+res.totalVol.toFixed(2)+' m³</b><span>估算总体积</span></div>'+
+    '<div class="kpi"><b>'+nf(res.weight)+' kg</b><span>估算总重量</span></div>'+
+    '<div class="kpi"><b>'+res.boxes+'</b><span>建议纸箱数</span></div>'+
+    '</div></div>');
+
+  html.push('<div class="tabs" id="tabs">'+
+    '<button class="on" data-pane="list">物品清单</button>'+
+    '<button data-pane="plan">平面图</button>'+
+    '<button data-pane="iso">立体草图</button>'+
+    '<button data-pane="advice">落位建议</button>'+
+    (resB?'<button data-pane="move">换家对比</button>':'')+
+    '</div>');
+
+  /* list */
+  html.push('<div class="pane" data-pane="list">');
+  html.push('<table class="tbl"><thead><tr><th class="n">#</th><th>物品</th><th>类别</th><th class="n">尺寸 W×D×H (mm)</th><th class="n">体积 (m³)</th><th>建议位置</th><th class="n">来源</th></tr></thead><tbody>');
+  res.placed.forEach(function(pl,i){
+    var it=pl.it;
+    html.push('<tr><td class="n">'+String(i+1).padStart(2,'0')+'</td><td>'+esc(it.n)+'</td><td>'+esc(it.c)+'</td>'+
+      '<td class="n">'+it.w+' × '+it.d+' × '+it.h+'</td>'+
+      '<td class="n">'+(it.w*it.d*it.h/1e9).toFixed(3)+'</td>'+
+      '<td>'+wallName(pl.wall)+'</td>'+
+      '<td class="n">'+(it.est?'估':'标准值')+'</td></tr>');
+  });
+  res.unplaced.forEach(function(it){
+    html.push('<tr><td class="n">--</td><td>'+esc(it.n)+'</td><td>'+esc(it.c)+'</td>'+
+      '<td class="n">'+it.w+' × '+it.d+' × '+it.h+'</td>'+
+      '<td class="n">'+(it.w*it.d*it.h/1e9).toFixed(3)+'</td>'+
+      '<td><span class="pill warn">放不下</span></td>'+
+      '<td class="n">'+(it.est?'估':'标准值')+'</td></tr>');
+  });
+  html.push('</tbody></table>');
+  html.push('<div class="note">「标准值」= 直接套用该品类常见尺寸；「估」= 根据照片透视推算，误差约 ±3cm。</div>');
+  html.push('</div>');
+
+  /* plan */
+  html.push('<div class="pane" data-pane="plan" hidden><div class="dwg2"><div class="hd"><span>FIG. 01 — 平面落位图</span><span>1:'+Math.round(1000/res.room.w*3).toFixed(0)+' · 单位 mm</span></div><div class="bd">'+planSVG(res)+'</div></div>');
+  html.push('<div class="note">黑色实线为房间轮廓与门洞，细线为家具轮廓，虚线为门扇开启范围与尺寸标注。</div></div>');
+
+  /* iso */
+  html.push('<div class="pane" data-pane="iso" hidden><div class="dwg2"><div class="hd"><span>FIG. 02 — 立体草图 ISO VIEW</span><span>层高 '+res.room.h+'mm</span></div><div class="bd">'+isoSVG(res)+'</div></div>');
+  html.push('<div class="note">等距投影线框，按真实比例绘制；前方两面墙省略，方便看内部。</div></div>');
+
+  /* advice */
+  var order = res.placed.slice().sort(function(a,b){return (b.rect.w*b.rect.h)-(a.rect.w*a.rect.h)});
+  html.push('<div class="pane" data-pane="advice" hidden>');
+  html.push('<div class="block"><h4>搬运顺序</h4><ol>');
+  order.slice(0,6).forEach(function(pl,i){
+    html.push('<li>第 '+(i+1)+' 步：'+esc(pl.it.n)+' — 先搬到'+wallName(pl.wall)+'，靠墙放稳后再进下一件。</li>');
+  });
+  if(res.placed.length>6) html.push('<li>其余 '+(res.placed.length-6)+' 件小件在最后统一归位，避免来回绕路。</li>');
+  html.push('</ol></div>');
+  html.push('<div class="two-col">');
+  html.push('<div class="block"><h4>装箱与打包</h4><ul>'+
+    '<li>需要装箱的小件约 '+res.small+' 件，建议准备 '+res.boxes+' 个 400×400×400mm 纸箱。</li>'+
+    '<li>箱内留 1cm 缓冲，重物在下、轻物在上，单箱毛重控制在 20kg 以内。</li>'+
+    '<li>每个箱子写上房间代号，搬到新家后按房间分区堆放。</li>'+
+    '</ul></div>');
+  html.push('<div class="block"><h4>尺寸核对提醒</h4><ul>'+
+    '<li>放不下的物品清单里单独列出，不会静默丢失。</li>'+
+    '<li>标注为「估」的家具，正式下单或购买收纳件前请用卷尺复核。</li>'+
+    '<li>门洞净宽、电梯尺寸不在照片估算范围内，需要单独量一次。</li>'+
+    '</ul></div>');
+  html.push('</div>');
+  if(res.conflicts.length){
+    html.push('<div class="block"><h4>检测到 '+res.conflicts.length+' 处需要留意</h4><ul>');
+    res.conflicts.forEach(function(c){ html.push('<li><span class="pill warn">注意</span>'+esc(c)+'</li>') });
+    html.push('</ul></div>');
+  } else {
+    html.push('<div class="block"><h4>未检测到冲突</h4><p style="margin:0;font-size:13.5px;color:var(--ink-70);line-height:1.9;font-weight:300">门的开启空间充足，主通道净宽约 '+Math.round(res.passage)+'mm，所有物品都能落位。可以按上面的顺序直接开搬。</p></div>');
+  }
+  html.push('</div>');
+
+  html.push('<div class="block"><h4>本方案说明</h4><p style="margin:0;font-size:13px;line-height:1.9;color:var(--ink-70);font-weight:300">'+esc(res.closer)+'</p></div>');
+
+  /* move compare */
+  if(resB){
+    var itemsA = res.items;
+    var inB = layoutRoom(resB.room, itemsA, 1234);
+    var fit = inB.placed.length, fail = inB.unplaced.length;
+    html.push('<div class="pane" data-pane="move" hidden>');
+    html.push('<div class="block"><h4>换家对比结果</h4><ul>'+
+      '<li>房间 A：'+res.room.w+'×'+res.room.d+'mm，识别 '+res.items.length+' 件物品。</li>'+
+      '<li>房间 B：'+resB.room.w+'×'+resB.room.d+'mm，识别 '+resB.items.length+' 件物品。</li>'+
+      '<li>把 A 的物品全部放进 B：<span class="pill">可放 '+fit+' 件</span><span class="pill warn">放不下 '+fail+' 件</span></li>'+
+      '</ul></div>');
+    html.push('<div class="block"><h4>哪些放不下</h4><ul>');
+    if(inB.unplaced.length){ inB.unplaced.forEach(function(u){ html.push('<li>'+esc(u.n)+'（'+u.w+'×'+u.d+'mm）在 B 房间没有合适落位，建议处理掉或换成可折叠款式。</li>') }) }
+    else html.push('<li>A 房间的全部物品都能放进 B 房间，尺寸上没有硬冲突，可以直接搬。</li>');
+    html.push('</ul></div>');
+    html.push('<div class="two-col">');
+    html.push('<div class="dwg2"><div class="hd"><span>房间 B 落位（放入 A 的物品）</span><span>SCHEME</span></div><div class="bd">'+planSVG({room:resB.room, placed:inB.placed, door:inB.door})+'</div></div>');
+    html.push('<div class="dwg2"><div class="hd"><span>房间 B 立体草图</span><span>ISO</span></div><div class="bd">'+isoSVG({room:resB.room, placed:inB.placed})+'</div></div>');
+    html.push('</div>');
+    html.push('<div class="note">对比基于两边照片推算的房间尺寸与家具清单，仅评估尺寸与落位可行性，不涉及搬家公司报价。</div>');
+    html.push('</div>');
+  }
+
+  html.push('<div class="res-foot">'+
+    '<button class="btn btn--sm" id="btnCsv">导出清单 CSV</button>'+
+    '<button class="btn btn--sm" id="btnSvgPlan">导出平面图 SVG</button>'+
+    '<button class="btn btn--sm" id="btnSvgIso">导出立体草图 SVG</button>'+
+    '<button class="btn btn--sm" id="btnPrint">打印 / 存 PDF</button>'+
+    '</div>');
+  html.push('<div class="note">本工作台为本地演示引擎：照片不会离开你的浏览器，结果由内置的尺寸库与排布算法生成，可接入真实视觉模型获得更高精度。</div>');
+
+  el.innerHTML = html.join('');
+  el.hidden = false;
+  $('#empty').hidden = true;
+  window.__lastResult = {a:res, b:resB||null};
+
+  /* tabs */
+  var tabs=$('#tabs');
+  if(tabs){
+    tabs.addEventListener('click', function(e){
+      var b=e.target.closest('button[data-pane]'); if(!b) return;
+      $$('button[data-pane]',tabs).forEach(function(x){x.classList.toggle('on', x===b)});
+      $$('.pane',el).forEach(function(p){ p.hidden = p.getAttribute('data-pane')!==b.getAttribute('data-pane') });
+    });
+  }
+  /* exports */
+  var csvBtn=$('#btnCsv'); if(csvBtn) csvBtn.addEventListener('click', function(){ exportCsv(res) });
+  var sp=$('#btnSvgPlan'); if(sp) sp.addEventListener('click', function(){ download('plano-plan.svg', planSVG(res), 'image/svg+xml') });
+  var si=$('#btnSvgIso'); if(si) si.addEventListener('click', function(){ download('plano-iso.svg', isoSVG(res), 'image/svg+xml') });
+  var pr=$('#btnPrint'); if(pr) pr.addEventListener('click', function(){ window.print() });
+}
+function download(name, text, type){
+  try{
+    var blob=new Blob([text],{type:type||'text/plain'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download=name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url)},4000);
+  }catch(e){ alert('导出失败：'+e.message) }
+}
+function exportCsv(res){
+  var rows=[['序号','物品','类别','宽mm','深mm','高mm','体积m³','重量kg','建议位置','尺寸来源']];
+  res.placed.forEach(function(pl,i){
+    rows.push([i+1, pl.it.n, pl.it.c, pl.it.w, pl.it.d, pl.it.h, (pl.it.w*pl.it.d*pl.it.h/1e9).toFixed(3), pl.it.kg, wallName(pl.wall), pl.it.est?'估':'标准值']);
+  });
+  res.unplaced.forEach(function(it){
+    rows.push(['--', it.n, it.c, it.w, it.d, it.h, (it.w*it.d*it.h/1e9).toFixed(3), it.kg, '放不下', it.est?'估':'标准值']);
+  });
+  var csv='\ufeff'+rows.map(function(r){
+    return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"' }).join(',')
+  }).join('\r\n');
+  download('plano-inventory.csv', csv, 'text/csv;charset=utf-8');
+}
+
+/* ---------- progress ---------- */
+var STEPS=['读取照片','识别物品品类','量取尺寸','计算落位','生成图纸与清单'];
+function renderProgress(now){
+  var ol=$('#progList'); ol.innerHTML='';
+  STEPS.forEach(function(s,i){
+    var li=document.createElement('li');
+    li.textContent=s;
+    li.className = i<now ? 'done' : (i===now ? 'now' : 'wait');
+    ol.appendChild(li);
+  });
+  $('#progBar').style.width = Math.round((now/STEPS.length)*100)+'%';
+}
+
+/* ---------- run ---------- */
+function seedFor(list){
+  return list.map(function(p){
+    var m=p.metrics||{};
+    return p.name+':'+(p.size||0)+':'+(m.sig||'')+':'+(m.light||0).toFixed(3)+':'+(m.edges||0).toFixed(3);
+  }).join('|');
+}
+
+async function run(){
+  if(busy) return;
+  var list = photos[activeRoom];
+  var other = activeRoom==='A' ? photos.B : photos.A;
+  if(!list.length){ alert('当前房间还没有照片。'); return }
+  busy=true; sync(); $('#btnRun').textContent='扫描中…';
+  $('#prog').hidden=false; renderProgress(0);
+  $('#result').hidden=true; $('#empty').hidden=true;
+  try{
+    var t0=Date.now();
+    for(var i=0;i<list.length;i++){
+      if(!list[i].metrics){ list[i].metrics = await metricsFromSrc(list[i].src) }
+    }
+    var tLoad=Date.now();
+    renderProgress(1); await sleep(240);
+    var resA = analyze(list, seedFor(list));
+    renderProgress(2); await sleep(300);
+    renderProgress(3); await sleep(320);
+    var resB=null;
+    if(other.length){
+      for(var j=0;j<other.length;j++){ if(!other[j].metrics){ other[j].metrics = await metricsFromSrc(other[j].src) } }
+      resB = analyze(other, seedFor(other));
+    } else { renderProgress(4); await sleep(200) }
+    renderProgress(5);
+    renderResult(resA, resB);
+  }catch(err){
+    $('#result').hidden=false;
+    $('#result').innerHTML='<div class="block"><h4>扫描失败</h4><p style="margin:0;font-size:13.5px;line-height:1.9;color:var(--ink-70)">'+esc(err.message||String(err))+'</p></div>';
+  }finally{
+    busy=false; $('#btnRun').textContent='开始扫描'; sync();
+    setTimeout(function(){ $('#prog').hidden=true }, 900);
+  }
+}
+
+/* ---------- studio open/close ---------- */
+function openStudio(){
+  $('#studio').classList.add('open');
+  document.body.classList.add('locked');
+  var f=$('#stClose'); if(f) f.focus();
+}
+function closeStudio(){
+  $('#studio').classList.remove('open');
+  document.body.classList.remove('locked');
+}
+$$('[data-open]').forEach(function(el){ el.addEventListener('click', openStudio) });
+$('#stClose').addEventListener('click', closeStudio);
+document.addEventListener('keydown', function(e){ if(e.key==='Escape' && $('#studio').classList.contains('open')) closeStudio() });
+
+/* room switch */
+$('#roomSwitch').addEventListener('click', function(e){
+  var b=e.target.closest('button[data-room]'); if(!b) return;
+  activeRoom=b.getAttribute('data-room');
+  $$('#roomSwitch button').forEach(function(x){ x.classList.toggle('on', x===b) });
+  $('#out').scrollTop=0;
+});
+
+/* upload */
+function handleFiles(files){
+  var arr=Array.prototype.slice.call(files||[]);
+  if(!arr.length) return;
+  arr.forEach(function(f){
+    if(!/^image\//.test(f.type)) return;
+    if(f.size > 24*1024*1024) return;
+    addPhoto(activeRoom, {name:f.name||('photo-'+Date.now()+'.jpg'), src:URL.createObjectURL(f), sample:false, size:f.size||0});
+  });
+}
+var drop=$('#drop'), input=$('#fileInput');
+drop.addEventListener('click', function(){ input.click() });
+drop.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); input.click() } });
+input.addEventListener('change', function(){ handleFiles(input.files); input.value='' });
+['dragenter','dragover'].forEach(function(ev){
+  drop.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); drop.classList.add('over') });
+});
+['dragleave','drop'].forEach(function(ev){
+  drop.addEventListener(ev, function(e){ e.preventDefault(); e.stopPropagation(); if(ev==='dragleave' && drop.contains(e.relatedTarget)) return; drop.classList.remove('over') });
+});
+drop.addEventListener('drop', function(e){ if(e.dataTransfer && e.dataTransfer.files) handleFiles(e.dataTransfer.files) });
+document.addEventListener('paste', function(e){
+  if(!$('#studio').classList.contains('open')) return;
+  var items=(e.clipboardData && e.clipboardData.files) || [];
+  if(items.length){ handleFiles(items) }
+});
+document.addEventListener('dragover', function(e){ e.preventDefault() });
+document.addEventListener('drop', function(e){ e.preventDefault() });
+
+/* sample */
+$('#btnSample').addEventListener('click', function(){
+  photos.A=[]; photos.B=[];
+  addPhoto('A', {name:SAMPLES[0].name, src:SAMPLES[0].src, sample:true});
+  addPhoto('B', {name:SAMPLES[1].name, src:SAMPLES[1].src, sample:true});
+  activeRoom='A';
+  $$('#roomSwitch button').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-room')==='A') });
+  renderThumbs();
+});
+$('#btnClear').addEventListener('click', function(){
+  photos.A=[]; photos.B=[]; renderThumbs();
+  $('#result').hidden=true; $('#result').innerHTML=''; $('#empty').hidden=false;
+  window.__lastResult=null;
+});
+$('#btnRun').addEventListener('click', run);
+
+/* ---------- landing interactions ---------- */
+var io = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target) } });
+},{threshold:0.1, rootMargin:'0px 0px -6% 0px'});
+$$('.sec-head, .feats, .steps, .scenes, .spec, .faq, .hero-grid, .band-in, .two-shots, .move-out, .rv-cap').forEach(function(el){ el.classList.add('r'); io.observe(el) });
+$$('.feat, .step, .scene, .spec-row, .band-item, .stat').forEach(function(el,i){
+  el.classList.add('r'); el.style.setProperty('--d', ((i%4)*0.07)+'s'); io.observe(el);
+});
+
+/* faq */
+$$('.faq-item').forEach(function(item){
+  var q=$('.faq-q',item), a=$('.faq-a',item);
+  q.addEventListener('click', function(){
+    var open=item.classList.toggle('open');
+    a.style.maxHeight = open ? (a.scrollHeight+'px') : '0px';
+  });
+});
+
+/* reveal slider */
+var rv=$('#reveal');
+if(rv){
+  var dragging=false, autoDone=false;
+  var setX=function(clientX){
+    var r=rv.getBoundingClientRect();
+    if(!r.width) return;
+    var p=((clientX-r.left)/r.width)*100;
+    rv.style.setProperty('--x', clamp(p,4,96)+'%');
+  };
+  rv.addEventListener('pointerdown', function(e){ dragging=true; try{rv.setPointerCapture(e.pointerId)}catch(err){} setX(e.clientX) });
+  rv.addEventListener('pointermove', function(e){ if(dragging) setX(e.clientX) });
+  rv.addEventListener('pointerup', function(){ dragging=false });
+  rv.addEventListener('pointercancel', function(){ dragging=false });
+  var rvio=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting || autoDone) return;
+      autoDone=true; rvio.disconnect();
+      var start=null, from=52, to=80, dur=1300;
+      requestAnimationFrame(function tick(t){
+        if(!start) start=t;
+        var k=Math.min(1,(t-start)/dur), ease=1-Math.pow(1-k,3);
+        rv.style.setProperty('--x',(from+(to-from)*ease).toFixed(1)+'%');
+        if(k<1) requestAnimationFrame(tick);
+        else setTimeout(function(){
+          var s2=null;
+          requestAnimationFrame(function back(t2){
+            if(!s2) s2=t2;
+            var k2=Math.min(1,(t2-s2)/900), e2=1-Math.pow(1-k2,3);
+            rv.style.setProperty('--x',(to-(to-52)*e2).toFixed(1)+'%');
+            if(k2<1) requestAnimationFrame(back);
+          });
+        },450);
+      });
+    });
+  },{threshold:0.45});
+  rvio.observe(rv);
+}
+
+/* counters */
+var cio=new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(!e.isIntersecting) return;
+    var el=e.target, target=parseInt(el.getAttribute('data-count'),10)||0;
+    cio.unobserve(el);
+    var s=null;
+    requestAnimationFrame(function run(t){
+      if(!s) s=t;
+      var k=Math.min(1,(t-s)/1100);
+      el.textContent=Math.round(target*(1-Math.pow(1-k,3)));
+      if(k<1) requestAnimationFrame(run);
+    });
+  });
+},{threshold:0.6});
+$$('[data-count]').forEach(function(c){ cio.observe(c) });
+
+/* signup */
+var form=$('#signupForm');
+if(form) form.addEventListener('submit', function(e){
+  e.preventDefault();
+  var b=form.querySelector('button'); b.textContent='已登记 ✓';
+  form.querySelector('input').value='';
+  setTimeout(function(){ b.textContent='申请内测' },2600);
+});
+
+renderThumbs();
+window.__plano = {analyze:analyze, planSVG:planSVG, isoSVG:isoSVG, layoutRoom:layoutRoom, photos:photos, addPhoto:addPhoto, run:run, openStudio:openStudio};
+})();
+</script>
+</body>
+</html>
