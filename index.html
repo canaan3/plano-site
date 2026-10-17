@@ -245,16 +245,21 @@ footer{border-top:1px solid var(--line);padding:clamp(36px,5vw,64px) 0 30px}
 
 .empty{display:flex;align-items:center;justify-content:center;height:100%;padding:24px}
 .empty[hidden]{display:none}
-.empty-in{max-width:780px;width:100%}
+.empty-in{display:grid;grid-template-columns:1.02fr .98fr;gap:clamp(22px,3vw,44px);align-items:center;max-width:940px;width:100%}
 .empty-in .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;color:var(--ink-45);display:block;margin-bottom:14px}
 .empty-in h4{font-size:clamp(18px,2vw,25px);line-height:1.4;letter-spacing:-.02em;margin:0 0 10px;font-weight:900}
-.empty-in>p{font-size:13px;line-height:1.95;color:var(--ink-70);font-weight:300;margin:0 0 22px;max-width:58ch}
-.empty-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:22px}
-.empty-grid>div{background:var(--paper);padding:16px 18px}
-.empty-grid b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;margin-bottom:6px;font-weight:500}
-.empty-grid span{font-size:12.5px;line-height:1.8;color:var(--ink-70);font-weight:300}
-.empty-note{margin:14px 0 0;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--ink-45)}
-@media(max-width:700px){.empty-grid{grid-template-columns:1fr}}
+.empty-in>div>p{font-size:13px;line-height:1.95;color:var(--ink-70);font-weight:300;margin:0 0 18px;max-width:46ch}
+.steps-mini{list-style:none;padding:0;margin:0 0 22px;display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
+.steps-mini li{font-size:12.5px;color:var(--ink-70);font-weight:300;display:flex;align-items:flex-start;gap:8px;line-height:1.7}
+.steps-mini b{font-family:var(--mono);font-size:9px;font-weight:400;letter-spacing:.08em;color:var(--ink);border:1px solid var(--line-strong);padding:2px 5px;line-height:1.3;flex:0 0 auto;margin-top:2px}
+.mini-plan{border:1px solid var(--line);background:var(--paper);padding:6px;
+  background-image:linear-gradient(rgba(16,16,16,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(16,16,16,.05) 1px,transparent 1px);background-size:22px 22px}
+.mini-plan svg{width:100%;height:auto;display:block}
+.mini-plan svg *{vector-effect:non-scaling-stroke}
+.mini-cap{display:block;margin-top:8px;font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--ink-45)}
+.empty-note{margin:14px 0 0;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--ink-45);line-height:1.9}
+@media(max-width:860px){.empty-in{grid-template-columns:1fr}.empty-right{display:none}}
+@media(max-width:700px){.steps-mini{grid-template-columns:1fr}}
 
 .res-head{border-bottom:1px solid var(--line-strong);padding-bottom:20px;margin-bottom:22px}
 .res-head h3{margin:0 0 12px;font-size:clamp(20px,2.2vw,28px);letter-spacing:-.02em;font-weight:900}
@@ -556,7 +561,7 @@ footer{border-top:1px solid var(--line);padding:clamp(36px,5vw,64px) 0 30px}
   <div class="st-top">
     <div class="l">
       <svg viewBox="0 0 26 26"><path d="M23 23 H3 V3 H12.5 A5 5 0 0 1 12.5 13 H3" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <b>PLANO</b><span>WORKSPACE / LOCAL ENGINE</span>
+      <b>PLANO</b><span>WORKSPACE / LOCAL ENGINE · v1.4</span>
     </div>
     <button class="btn btn--sm" id="stClose">关闭</button>
   </div>
@@ -597,17 +602,23 @@ footer{border-top:1px solid var(--line);padding:clamp(36px,5vw,64px) 0 30px}
     <section class="st-right" id="out">
       <div class="empty" id="empty">
         <div class="empty-in">
-          <span class="k">WORKSPACE / 从这里开始</span>
-          <h4>放几张照片，这里会变成一份能照着做的方案。</h4>
-          <p>左边上传你家每个房间的照片，点「开始扫描」。几秒钟后，右边会出现下面四样东西：</p>
-          <div class="empty-grid">
-            <div><b>01 物品清单</b><span>你有哪些东西、每件多大、多重、建议放哪面墙。</span></div>
-            <div><b>02 平面图</b><span>房间俯瞰图，带尺寸标注，一眼看出会不会挡门。</span></div>
-            <div><b>03 立体草图</b><span>等距线框，能看出高低关系，不像表格那么难想象。</span></div>
-            <div><b>04 搬运建议</b><span>先搬哪件、装几个箱子、哪些放不下要处理。</span></div>
+          <div class="empty-left">
+            <span class="k">WORKSPACE / 示例方案</span>
+            <h4>这里会出现你的方案。</h4>
+            <p>上传房间照片、点开始扫描，右边的示例区就会换成你自己的清单和图纸。</p>
+            <ul class="steps-mini">
+              <li><b>1</b><span>拍 3–5 张房间照片</span></li>
+              <li><b>2</b><span>拖到左边上传</span></li>
+              <li><b>3</b><span>点「开始扫描」</span></li>
+              <li><b>4</b><span>拿清单和图去执行</span></li>
+            </ul>
+            <button class="btn btn--sm btn--solid" id="btnDemo">先看一个示例 →</button>
+            <p class="empty-note">照片只在你的浏览器里读取，不会传到任何服务器。</p>
           </div>
-          <button class="btn btn--sm btn--solid" id="btnDemo">先看一个示例 →</button>
-          <p class="empty-note">照片只在你的浏览器里读取，不会传到任何服务器。</p>
+          <div class="empty-right">
+            <div class="mini-plan" id="miniPlan"></div>
+            <span class="mini-cap">示例 · 平面落位图 / 带尺寸</span>
+          </div>
         </div>
       </div>
       <div id="result" hidden></div>
@@ -701,6 +712,23 @@ function renderThumbs(){
 function sync(){
   var total = photos.A.length + photos.B.length;
   $('#btnRun').disabled = total===0 || busy;
+}
+function setEmpty(on){
+  var e = $('#empty');
+  if(!e) return;
+  e.hidden = !on;
+  e.style.display = on ? '' : 'none';
+}
+function initMini(){
+  var box = $('#miniPlan');
+  if(!box) return;
+  try{
+    var demo = [{id:'demo', name:'demo-room.jpg', size:1,
+      metrics:{light:.42, contrast:.18, edges:.23,
+               sig:'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+               bands:[.55,.50,.45], aspect:1.33}}];
+    box.innerHTML = planSVG(analyze(demo, 'demo-room-v14'));
+  }catch(err){ box.innerHTML = ''; }
 }
 
 /* ---------- image metrics ---------- */
@@ -1315,7 +1343,7 @@ function renderResult(res, resB){
 
   el.innerHTML = html.join('');
   el.hidden = false;
-  $('#empty').hidden = true;
+  setEmpty(false);
   window.__lastResult = {a:res, b:resB||null};
 
   /* tabs */
@@ -1385,7 +1413,7 @@ async function run(){
   if(!list.length){ alert('当前房间还没有照片。'); return }
   busy=true; sync(); $('#btnRun').textContent='扫描中…';
   $('#prog').hidden=false; renderProgress(0);
-  $('#result').hidden=true; $('#empty').hidden=true;
+  $('#result').hidden=true; setEmpty(false);
   try{
     var t0=Date.now();
     for(var i=0;i<list.length;i++){
@@ -1477,7 +1505,7 @@ var demoBtn=$('#btnDemo');
 if(demoBtn) demoBtn.addEventListener('click', function(){ loadSamples(); setTimeout(run, 250); });
 $('#btnClear').addEventListener('click', function(){
   photos.A=[]; photos.B=[]; renderThumbs();
-  $('#result').hidden=true; $('#result').innerHTML=''; $('#empty').hidden=false;
+  $('#result').hidden=true; $('#result').innerHTML=''; setEmpty(true);
   window.__lastResult=null;
 });
 $('#btnRun').addEventListener('click', run);
@@ -1602,6 +1630,7 @@ function selfTest(){
 }
 
 renderThumbs();
+initMini();
 window.__plano = {analyze:analyze, planSVG:planSVG, isoSVG:isoSVG, layoutRoom:layoutRoom, photos:photos, addPhoto:addPhoto, run:run, openStudio:openStudio, selfTest:selfTest};
 })();
 </script>
