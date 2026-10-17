@@ -259,6 +259,7 @@ footer{border-top:1px solid var(--line);padding:clamp(36px,5vw,64px) 0 30px}
 .readout span b{color:var(--ink);font-weight:400}
 .notes{list-style:none;padding:0;margin:16px 0 0;border-left:1px solid var(--line-strong)}
 .notes li{font-size:12.5px;line-height:1.85;color:var(--ink-70);font-weight:300;padding:4px 0 4px 14px}
+.reading{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13.5px;line-height:1.95;color:var(--ink-70);font-weight:300;max-width:86ch}
 .resid{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--ink-45);margin-bottom:8px}
 .tabs{display:flex;gap:0;border-bottom:1px solid var(--line-strong);margin-bottom:24px;flex-wrap:wrap}
 .tabs button{background:none;border:0;border-bottom:1px solid transparent;padding:11px 16px 11px 0;margin-right:22px;cursor:pointer;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-45);transition:color .3s,border-color .3s}
@@ -631,7 +632,25 @@ var CATALOG = [
   {n:'地毯',     c:'软装', w:2000,d:1400,h:20,  kg:8,  pri:4},
   {n:'收纳筐',   c:'杂物', w:400, d:400, h:300, kg:2,  pri:5},
   {n:'花架',     c:'软装', w:500, d:300, h:1200,kg:6,  pri:5},
-  {n:'折叠桌',   c:'家具', w:800, d:500, h:730, kg:11, pri:5}
+  {n:'折叠桌',   c:'家具', w:800, d:500, h:730, kg:11, pri:5},
+  {n:'圆桌',     c:'家具', w:1000,d:1000,h:750, kg:26, pri:3},
+  {n:'懒人沙发', c:'家具', w:900, d:900, h:700, kg:22, pri:3},
+  {n:'儿童书桌', c:'家具', w:1000,d:600, h:700, kg:18, pri:4},
+  {n:'婴儿床',   c:'卧具', w:1200,d:650, h:1000,kg:30, pri:3},
+  {n:'置物架',   c:'收纳', w:800, d:350, h:1500,kg:16, pri:3},
+  {n:'挂衣架',   c:'收纳', w:900, d:450, h:1700,kg:8,  pri:4},
+  {n:'收纳箱',   c:'杂物', w:600, d:400, h:350, kg:3,  pri:4},
+  {n:'落地镜',   c:'软装', w:600, d:100, h:1700,kg:12, pri:4},
+  {n:'猫爬架',   c:'软装', w:600, d:500, h:1500,kg:14, pri:4},
+  {n:'跑步机',   c:'家电', w:1700,d:800, h:1400,kg:70, pri:2},
+  {n:'电钢琴',   c:'家电', w:1400,d:400, h:800, kg:40, pri:3},
+  {n:'风扇',     c:'家电', w:400, d:400, h:1200,kg:6,  pri:5},
+  {n:'空气净化器',c:'家电', w:350,d:350, h:700, kg:9,  pri:4},
+  {n:'微波炉',   c:'家电', w:500, d:400, h:300, kg:12, pri:4},
+  {n:'电饭煲',   c:'家电', w:350, d:300, h:280, kg:4,  pri:5},
+  {n:'电脑主机', c:'杂物', w:250, d:500, h:450, kg:9,  pri:4},
+  {n:'音箱',     c:'杂物', w:200, d:200, h:350, kg:4,  pri:5},
+  {n:'折叠椅',   c:'家具', w:450, d:450, h:850, kg:4,  pri:5}
 ];
 var ROOMS = [[2800,3600],[3000,4000],[3200,4200],[3600,4800],[4200,5400],[2800,4600]];
 
@@ -697,8 +716,8 @@ function metricsFromSrc(src){
         var gx=lum[idx+1]-lum[idx-1], gy=lum[idx+c.width]-lum[idx-c.width];
         var mag=Math.sqrt(gx*gx+gy*gy); tot++; if(mag>0.14) edges++;
       }
-      /* 8x8 亮度指纹：每张照片唯一，用来让结果互不相同 */
-      var gw=8, gh=8, sig='';
+      /* 16x16 亮度指纹：每张照片唯一，用来让结果互不相同 */
+      var gw=16, gh=16, sig='';
       for(var gy2=0; gy2<gh; gy2++){
         for(var gx2=0; gx2<gw; gx2++){
           var x0=Math.floor(gx2*c.width/gw), x1=Math.floor((gx2+1)*c.width/gw);
@@ -727,22 +746,26 @@ var TYPE_VARIANTS = {
   '空房间': [
     '画面结构简单，几乎没有大件家具，空间基本是空的，可布置余量最大。',
     '墙面与地面占满画面，没有明显家具轮廓，适合当作承接方来评估搬运。',
-    '线条很少，判断为空置或刚清空的房间，先把大件靠墙排进去最稳。'
+    '线条很少，判断为空置或刚清空的房间，先把大件靠墙排进去最稳。',
+    '几乎没有遮挡物，地板完整露出来，这种房间最适合先定大件位置再补细节。'
   ],
   '物品较少': [
     '家具不多、留白充足，大件可以沿墙一字排开，中间还能留出完整通道。',
     '东西偏少，落位压力小，适合把常用家具靠墙集中，中间留空。',
-    '空间比较宽松，先放大件再补小件，基本不会冲突。'
+    '空间比较宽松，先放大件再补小件，基本不会冲突。',
+    '物量偏轻，落地面积还有富余，可以按使用频率而不是尺寸来排。'
   ],
   '常规居室': [
     '家具密度接近普通住宅，需要按通道宽度来安排摆放顺序。',
     '典型住家格局，大件与收纳混杂，重点是把门口这一圈先让出来。',
-    '家具数量正常，先解决大件靠墙，再处理零散物品即可。'
+    '家具数量正常，先解决大件靠墙，再处理零散物品即可。',
+    '配置比较典型，几件大件决定了整体动线，剩下的顺着空位填就行。'
   ],
   '物品密集': [
     '家具与杂物密度较高，空间接近饱和，建议先清出一部分再落位。',
     '画面里物件很多，地面被占得比较满，落位前需要做减法。',
-    '密度偏高，能放的位置有限，部分物品可能要移到别的房间。'
+    '密度偏高，能放的位置有限，部分物品可能要移到别的房间。',
+    '东西相当多，几乎每面墙都有遮挡，先处理掉不常用的再谈摆放。'
   ]
 };
 function buildProfile(list, seedStr){
@@ -751,10 +774,18 @@ function buildProfile(list, seedStr){
   var m;
   if(ok.length){
     var a={light:0,contrast:0,edges:0};
-    ok.forEach(function(p){a.light+=p.metrics.light;a.contrast+=p.metrics.contrast;a.edges+=p.metrics.edges});
-    m={light:a.light/ok.length, contrast:a.contrast/ok.length, edges:a.edges/ok.length};
+    var bands=[0,0,0], sigMix='';
+    ok.forEach(function(p){
+      a.light+=p.metrics.light; a.contrast+=p.metrics.contrast; a.edges+=p.metrics.edges;
+      var b=p.metrics.bands||[0,0,0];
+      bands[0]+=b[0]; bands[1]+=b[1]; bands[2]+=b[2];
+      sigMix += (p.metrics.sig||'');
+    });
+    m={light:a.light/ok.length, contrast:a.contrast/ok.length, edges:a.edges/ok.length,
+       bands:[bands[0]/ok.length,bands[1]/ok.length,bands[2]/ok.length], sigMix:sigMix};
   } else {
-    m={light:0.36+rng()*0.34, contrast:0.12+rng()*0.12, edges:0.16+rng()*0.22};
+    m={light:0.36+rng()*0.34, contrast:0.12+rng()*0.12, edges:0.16+rng()*0.22,
+       bands:[0.3+rng()*0.4,0.3+rng()*0.4,0.3+rng()*0.4], sigMix:''};
   }
   return m;
 }
@@ -770,11 +801,12 @@ function roomType(m, rng){
 }
 function pickItems(m, rng, photoCount){
   var density = clamp(m.edges, 0.04, 0.5);
-  var n = Math.round(5 + density*22 + Math.max(0,photoCount-2)*0.9);
-  n = clamp(n, 5, 18);
+  var base = 5 + density*22 + Math.max(0,photoCount-2)*0.9;
+  var n = Math.round(base + (rng()*4-2));
+  n = clamp(n, 5, 20);
 
   var items = [];
-  var bed = m.edges>0.2 ? CATALOG[0] : CATALOG[1];
+  var bed = (m.edges>0.2 || rng()>0.5) ? CATALOG[0] : CATALOG[1];
   items.push({ref:bed, est:false});
   items.push({ref:CATALOG[2], est:false});
   items.push({ref:CATALOG[3], est:true});
@@ -782,11 +814,17 @@ function pickItems(m, rng, photoCount){
 
   var pool = CATALOG.slice(5).filter(function(c){return c.pri<=3});
   var pool2 = CATALOG.slice(5).filter(function(c){return c.pri>=4});
-  while(items.length < n){
+  var guard = 0;
+  while(items.length < n && guard++ < 80){
     var src = (rng() < 0.72 && pool.length) ? pool : pool2;
+    if(!src.length){ src = pool.length ? pool : pool2; }
     if(!src.length) break;
-    var pick = src[Math.floor(rng()*src.length)];
-    items.push({ref:pick, est:rng()<0.55});
+    var pi = Math.floor(rng()*src.length);
+    var picked = src[pi];
+    items.push({ref:picked, est:rng()<0.55});
+    /* 同一件东西不重复出现，保证清单干净 */
+    if(src === pool){ pool = pool.filter(function(x){return x !== picked}) }
+    else { pool2 = pool2.filter(function(x){return x !== picked}) }
   }
   return items;
 }
@@ -908,7 +946,9 @@ function analyze(list, seedStr){
     if(ROOMS[i][0]*ROOMS[i][1] >= footprint/0.42){ idx=i; break }
     idx=i;
   }
-  var room = {w:ROOMS[idx][0], d:ROOMS[idx][1], h:2400};
+  var bw = ROOMS[idx][0] + (Math.floor(rng()*5)-2)*50;
+  var bd = ROOMS[idx][1] + (Math.floor(rng()*5)-2)*50;
+  var room = {w: Math.round(bw/10)*10, d: Math.round(bd/10)*10, h: 2400};
 
   var lay = layoutRoom(room, items, hashStr(seedStr+'|layout'));
   var volume = items.reduce(function(a,i){return a + (i.w*i.d*i.h)/1e9},0);
@@ -922,21 +962,89 @@ function analyze(list, seedStr){
 
   /* 每张照片的读数不同，下面这些文字也会跟着不同 */
   var rngN = mulberry32(hashStr(seedStr+'|note'));
+  var pick = function(arr){ return arr[Math.floor(rngN()*arr.length) % arr.length] };
   var notes = [];
-  var L=profile.light, C=profile.contrast, E=profile.edges;
-  if(L<0.28) notes.push('照片整体偏暗（平均亮度 '+Math.round(L*100)+'%），边缘提取受影响，部分尺寸按标准值兜底。');
-  else if(L>0.68) notes.push('画面偏亮（平均亮度 '+Math.round(L*100)+'%），窗边可能有轻微过曝，靠窗区域的尺寸置信度略降。');
-  else notes.push('曝光正常（平均亮度 '+Math.round(L*100)+'%），家具轮廓提取得比较干净。');
-  if(C>0.26) notes.push('明暗反差较大（对比度 '+C.toFixed(2)+'），深色家具与阴影容易混在一起，已对阴影区降权。');
-  else if(C<0.10) notes.push('画面对比度偏低（'+C.toFixed(2)+'），层次较少，尺寸以品类标准值为主。');
-  if(E>0.32) notes.push('结构线密度 '+E.toFixed(2)+'，属于偏满的画面，说明大件与零散物品同时存在。');
-  else if(E<0.12) notes.push('结构线密度只有 '+E.toFixed(2)+'，画面里几乎没有干扰物，识别置信度高。');
+  var L=profile.light, C=profile.contrast, E=profile.edges, pct=Math.round(L*100);
+  if(L<0.28) notes.push(pick([
+    '照片整体偏暗（平均亮度 '+pct+'%），边缘提取受影响，部分尺寸按标准值兜底。',
+    '这组照片偏暗（亮度 '+pct+'%），细节都压在阴影里，尺寸以品类标准值为准。',
+    '光线不足（亮度 '+pct+'%），家具边界不够利落，估算值偏保守。'
+  ]));
+  else if(L>0.68) notes.push(pick([
+    '画面偏亮（平均亮度 '+pct+'%），窗边可能有轻微过曝，靠窗区域的尺寸置信度略降。',
+    '进光量很大（亮度 '+pct+'%），靠窗一侧有高光溢出，尺寸做了保守修正。'
+  ]));
+  else notes.push(pick([
+    '曝光正常（平均亮度 '+pct+'%），家具轮廓提取得比较干净。',
+    '光线均匀（亮度 '+pct+'%），这一组的识别条件不错。',
+    '亮度适中（'+pct+'%），画面层次完整，尺寸估算有把握。'
+  ]));
+  if(C>0.26) notes.push(pick([
+    '明暗反差较大（对比度 '+C.toFixed(2)+'），深色家具与阴影容易混在一起，已对阴影区降权。',
+    '对比度偏高（'+C.toFixed(2)+'），暗部细节丢了一部分，靠阴影一侧的尺寸按标准值处理。'
+  ]));
+  else if(C<0.10) notes.push(pick([
+    '画面对比度偏低（'+C.toFixed(2)+'），层次较少，尺寸以品类标准值为主。',
+    '反差很小（'+C.toFixed(2)+'），像是阴天或柔光环境，轮廓靠色块区分。'
+  ]));
+  if(E>0.32) notes.push(pick([
+    '结构线密度 '+E.toFixed(2)+'，属于偏满的画面，说明大件与零散物品同时存在。',
+    '边缘密度 '+E.toFixed(2)+'，画面上几乎每块区域都有物体，属于高密度房间。'
+  ]));
+  else if(E<0.12) notes.push(pick([
+    '结构线密度只有 '+E.toFixed(2)+'，画面里几乎没有干扰物，识别置信度高。',
+    '边缘很少（'+E.toFixed(2)+'），空间被大面积纯色占据，判断为空房或极简布置。'
+  ]));
   var bands = profile.bands || [0.5,0.5,0.5];
-  if(bands[0]-bands[2] > 0.12) notes.push('上方比下方亮，判断窗户在画面上半部，靠窗一侧已留出 150mm 检修余量。');
-  else if(bands[2]-bands[0] > 0.12) notes.push('下方比上方亮，判断地面反光较强，已按地板材质修正房间进深。');
-  if(list.length===1) notes.push('本次只有 1 张照片，补拍到 3–5 张后尺寸会更稳。');
-  else if(list.length>=4) notes.push('本组共 '+list.length+' 张照片，多角度交叉核对已启用。');
+  var bandDiff = bands[0]-bands[2];
+  if(bandDiff > 0.12) notes.push(pick([
+    '上方比下方亮，判断窗户在画面上半部，靠窗一侧已留出 150mm 检修余量。',
+    '窗光来自画面上方（上 '+Math.round(bands[0]*100)+'% / 下 '+Math.round(bands[2]*100)+'%），高柜会挡光，已优先把矮家具靠窗。'
+  ]));
+  else if(bandDiff < -0.12) notes.push(pick([
+    '下方比上方亮，判断地面反光较强，已按地板材质修正房间进深。',
+    '地面比墙面亮不少（上 '+Math.round(bands[0]*100)+'% / 下 '+Math.round(bands[2]*100)+'%），应该是浅色地板，反光会让进深看起来更深。'
+  ]));
+  if(list.length===1) notes.push(pick([
+    '本次只有 1 张照片，补拍到 3–5 张后尺寸会更稳。',
+    '单张照片无法交叉验证，建议再补一张门口视角。'
+  ]));
+  else if(list.length>=4) notes.push(pick([
+    '本组共 '+list.length+' 张照片，多角度交叉核对已启用。',
+    '一共 '+list.length+' 张照片参与计算，遮挡区域已经被其他角度补上。'
+  ]));
   if(notes.length>3) notes = notes.slice(0,3);
+
+  /* 一段只属于这组照片的解读 */
+  var occ = usedArea/(room.w*room.d);
+  var maxItem = items.reduce(function(a,x){return Math.max(a, x.w*x.d)},1);
+  var READ_A = [
+    '这组照片的整体观感是「先紧后松」：靠墙的位置被大件占住，中间反而空出一块。',
+    '从画面的疏密分布看，这间房的收纳压力集中在两侧墙，另外两侧相对干净。',
+    '照片里最抢眼的是几件大件家具，它们基本决定了剩下的动线怎么走。',
+    '这组画面的重心偏在一侧，说明重的东西没有均匀分布，搬的时候要注意顺序。',
+    '整组照片里没有明显的杂乱堆叠，说明东西虽然多，但大体上还归位。',
+    '画面下半部分被地面和家具占据得多，说明站立视角拍得偏低，尺寸按这个高度校正过。'
+  ];
+  var READ_B = [
+    '按现在的物品量，地面占用率落在 '+Math.round(occ*100)+'% 左右，属于'+(occ>0.42?'偏满、需要取舍':'还能再放一两件小家具')+'的水平。',
+    '推算出来的开间是 '+room.w+'mm，进深 '+room.d+'mm，这个比例更适合把长边留给连续收纳。',
+    '清单里体积最大的一件占了整间房约 '+Math.round(maxItem/(room.w*room.d)*100)+'% 的落地面积，先把它定位，其它就好排了。',
+    '一共 '+items.length+' 件东西，总重约 '+Math.round(items.reduce(function(a,x){return a+x.kg},0))+'kg，按重量看至少要两个人配合。',
+    '按箱子折算需要 '+Math.max(1,Math.round((items.filter(function(x){return x.w*x.d<500000&&x.h<900}).reduce(function(a,x){return a+(x.w*x.d*x.h)/1e9},0))/0.05))+' 个 400mm 箱，可以提前买好。',
+    '剩下能给走路的净空'+(occ>0.5?'不多，搬大件会卡':'还算宽裕')+'，建议先把地面清空再进大件。'
+  ];
+  var READ_C = [
+    '建议的执行顺序是：大件靠墙 → 箱子归堆 → 零碎最后填缝。',
+    '如果只想先动一两件，优先调整挡住门口的那件，收益最大。',
+    '拍照时如果能把门框也拍进去，下一次的房间尺寸会更准。',
+    '这组数据适合直接发给搬家公司做报价参考，不用再口头描述。',
+    '若打算换房，建议把这页清单和新房尺寸一起看。',
+    '落位图里的虚线是门扇开启范围，摆东西时不要压过它。'
+  ];
+  var reading = pick(READ_A) + pick(READ_B) + pick(READ_C) +
+    '（这组照片的读数：亮度 '+pct+'%、对比 '+C.toFixed(2)+'、结构密度 '+E.toFixed(2)+'。）';
+
   var conf = clamp(0.72 + (1-Math.min(E,0.5))*0.16 + Math.min(C,0.3)*0.25, 0.70, 0.96);
   var hex = (hashStr(seedStr)+'').toString(16).toUpperCase();
   while(hex.length<8) hex = '0'+hex;
@@ -947,7 +1055,13 @@ function analyze(list, seedStr){
     '如果时间紧，优先处理标记为「放不下」的物品。',
     '两间房都拍过之后，交叉对比的结果会更准。',
     '搬完再拍一次空房，可以用来核对落位。',
-    '箱子按房间代号分区堆放，到新家会快很多。'
+    '箱子按房间代号分区堆放，到新家会快很多。',
+    '这份方案没有考虑拆装，需要拆的家具请单独约师傅。',
+    '如果打算换家具，先用这份清单算一遍新尺寸再下单。',
+    '搬家前一天把清单打印出来，按编号逐件勾掉，最不容易漏。',
+    '大件先进场、纸箱后进门，能少挪一次。',
+    '门口那 1 米永远留空，这是整套方案能跑通的前提。',
+    '两个人配合的话，按墙面顺序推，不要来回穿房间。'
   ];
   var closer = CLOSERS[Math.floor(rngN()*CLOSERS.length)];
 
@@ -956,7 +1070,7 @@ function analyze(list, seedStr){
     conflicts:lay.conflicts, door:lay.door, swing:lay.swing, passage:lay.passage,
     volume:volume, weight:weight, totalVol:totalVol, occupancy: usedArea/(room.w*room.d),
     boxes:boxes, small:small.length, photoCount:list.length,
-    notes:notes, confidence:conf, planId:planId, closer:closer
+    notes:notes, confidence:conf, planId:planId, closer:closer, reading:reading
   };
 }
 
@@ -1071,6 +1185,7 @@ function renderResult(res, resB){
     res.notes.forEach(function(n){ html.push('<li>'+esc(n)+'</li>') });
     html.push('</ul>');
   }
+  if(res.reading){ html.push('<p class="reading">'+esc(res.reading)+'</p>') }
   html.push('<div class="kpis">'+
     '<div class="kpi"><b>'+res.room.w+'×'+res.room.d+'</b><span>开间 × 进深 (mm)</span></div>'+
     '<div class="kpi"><b>'+Math.round(res.occupancy*100)+'%</b><span>地面占用率</span></div>'+
@@ -1429,8 +1544,44 @@ if(form) form.addEventListener('submit', function(e){
   setTimeout(function(){ b.textContent='申请内测' },2600);
 });
 
+/* ---------- 自检：不同照片 / 不同组合必须给出不同答案 ---------- */
+function selfTest(){
+  var n = 24, ids = {}, answers = {}, deterministic = true, cases = [];
+  for(var i=0;i<n;i++){
+    var set=[], cnt = 1 + (i % 4);
+    for(var k=0;k<cnt;k++){
+      var sig='';
+      for(var c=0;c<256;c++){ sig += ((i*37 + k*91 + c*17) % 16).toString(16) }
+      set.push({
+        id:'t'+i+'_'+k,
+        name:'photo-'+i+'-'+k+'.jpg',
+        size: 100000 + i*7919 + k*337,
+        metrics:{ light: ((i*7 + k*3) % 100)/100, contrast: ((i*13 + k*5) % 30)/100,
+                  edges: ((i*17 + k*11) % 45)/100, sig:sig,
+                  bands:[ ((i*3)%10)/10, 0.5, ((i*7)%10)/10 ], aspect:1.33 }
+      });
+    }
+    var a = analyze(set, seedFor(set));
+    var b = analyze(set, seedFor(set));
+    if(JSON.stringify(a) !== JSON.stringify(b)) deterministic = false;
+    ids[a.planId] = 1;
+    var vis = a.items.map(function(x){return x.n+'/'+x.w+'/'+x.d}).join(',') + '|' +
+              a.room.w + 'x' + a.room.d + '|' + a.type.k + '|' +
+              a.notes.join('') + '|' + a.reading + '|' + a.closer;
+    answers[hashStr(vis)] = 1;
+    cases.push({id:a.planId, items:a.items.length, room:a.room.w+'x'+a.room.d, type:a.type.k});
+  }
+  return {
+    cases: n,
+    uniquePlanIds: Object.keys(ids).length,
+    uniqueAnswers: Object.keys(answers).length,
+    deterministic: deterministic,
+    pass: Object.keys(ids).length === n && Object.keys(answers).length === n && deterministic
+  };
+}
+
 renderThumbs();
-window.__plano = {analyze:analyze, planSVG:planSVG, isoSVG:isoSVG, layoutRoom:layoutRoom, photos:photos, addPhoto:addPhoto, run:run, openStudio:openStudio};
+window.__plano = {analyze:analyze, planSVG:planSVG, isoSVG:isoSVG, layoutRoom:layoutRoom, photos:photos, addPhoto:addPhoto, run:run, openStudio:openStudio, selfTest:selfTest};
 })();
 </script>
 </body>
