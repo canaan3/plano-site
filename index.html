@@ -297,7 +297,7 @@ footer{border-top:1px solid var(--line);padding:clamp(36px,5vw,64px) 0 30px}
 .dwg2 .hd{display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line)}
 .dwg2 .hd span{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--ink-45)}
 .dwg2 .bd{padding:6px;background-image:linear-gradient(rgba(16,16,16,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(16,16,16,.05) 1px,transparent 1px);background-size:24px 24px}
-.dwg2 svg{width:100%;height:auto;display:block}
+.dwg2 svg{width:100%;height:auto;display:block;touch-action:none}
 .dwg2 svg *{vector-effect:non-scaling-stroke}
 .gs{stroke:var(--ink);fill:none}
 .gs.w{stroke-width:1.5}
@@ -305,6 +305,22 @@ footer{border-top:1px solid var(--line);padding:clamp(36px,5vw,64px) 0 30px}
 .gs.t{stroke-width:.7;stroke:var(--ink-25)}
 .gs.d{stroke-width:.6;stroke:var(--ink-25);stroke-dasharray:3 3}
 .gt{fill:var(--ink);stroke:none;font-family:var(--mono);opacity:.6}
+.item{cursor:grab}
+.item:active{cursor:grabbing}
+.item.sel{stroke:var(--ink);stroke-width:2.4}
+.plan-wrap{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+@media(max-width:980px){.plan-wrap{grid-template-columns:1fr}}
+.plan-side{display:flex;flex-direction:column;gap:12px}
+.side-block{border:1px solid var(--line);padding:14px 16px}
+.side-block h5{margin:0 0 10px;font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--ink-45);font-weight:400}
+.side-text{font-size:12.5px;line-height:1.8;color:var(--ink-70);font-weight:300}
+.side-list{list-style:none;margin:0;padding:0}
+.side-list li{font-size:12px;line-height:1.7;color:var(--ink-70);font-weight:300;padding:4px 0 4px 15px;position:relative}
+.side-list li::before{content:"";position:absolute;left:0;top:11px;width:5px;height:5px;background:var(--ink-25);border-radius:50%}
+.side-list li.warn{color:var(--ink)}
+.side-list li.warn::before{background:var(--ink)}
+.side-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.side-actions .btn{flex:1;justify-content:center;min-width:100px}
 .res-foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px;padding-top:20px;border-top:1px solid var(--line-strong)}
 .note{margin-top:14px;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--ink-45);line-height:1.9}
 @media print{
@@ -911,6 +927,8 @@ function layoutRoom(room, items, seed){
   var rng = mulberry32(seed);
   var doorW=900, doorX=Math.round(room.w*0.5-doorW/2), doorDepth=1000;
   var swing={x:doorX-40, y:Math.max(0,room.d-doorDepth), w:doorW+80, h:doorDepth};
+  /* 门口通道保留带：从门前一直留到房间 1/3 深度，不摆家具 */
+  var corridor={x:doorX-20, y:Math.round(room.d*0.34), w:doorW+40, h:room.d-Math.round(room.d*0.34)};
   var placed=[], unplaced=[];
   var walls={top:wallGap,left:wallGap,right:wallGap,bottom:wallGap};
   var order=['top','left','right','bottom'];
@@ -926,6 +944,7 @@ function layoutRoom(room, items, seed){
     else                  r={x:room.w-wallGap-deep, y:cur, w:deep, h:along};
     if(collides(r,placed,gap)) return null;
     if(k==='bottom' && overlaps(r,swing)) return null;
+    if(k!=='top' && overlaps(r,corridor)) return null;
     return r;
   }
 
@@ -953,6 +972,7 @@ function layoutRoom(room, items, seed){
             var cand={x:x,y:y,w:w,h:h};
             if(collides(cand,placed,gap)) continue;
             if(overlaps(cand,swing)) continue;
+            if(overlaps(cand,corridor)) continue;
             r2=cand; break;
           }
           if(r2) break;
@@ -987,11 +1007,13 @@ function analyze(list, seedStr){
   var items = pickItems(profile, rng, Math.max(list.length,3)).map(function(it){ return sizeOf(it, rng) });
 
   var footprint = items.reduce(function(a,i){return a + i.w*i.d},0);
-  var idx=0;
+  var need = footprint/0.34, idx = -1, minArea = Infinity, maxIdx = 0, maxArea = 0;
   for(var i=0;i<ROOMS.length;i++){
-    if(ROOMS[i][0]*ROOMS[i][1] >= footprint/0.42){ idx=i; break }
-    idx=i;
+    var a = ROOMS[i][0]*ROOMS[i][1];
+    if(a > maxArea){ maxArea = a; maxIdx = i; }
+    if(a >= need && a < minArea){ minArea = a; idx = i; }
   }
+  if(idx < 0) idx = maxIdx;
   var bw = ROOMS[idx][0] + (Math.floor(rng()*5)-2)*50;
   var bd = ROOMS[idx][1] + (Math.floor(rng()*5)-2)*50;
   var room = {w: Math.round(bw/10)*10, d: Math.round(bd/10)*10, h: 2400};
@@ -1116,14 +1138,17 @@ function analyze(list, seedStr){
     conflicts:lay.conflicts, door:lay.door, swing:lay.swing, passage:lay.passage,
     volume:volume, weight:weight, totalVol:totalVol, occupancy: usedArea/(room.w*room.d),
     boxes:boxes, small:small.length, photoCount:list.length,
-    notes:notes, confidence:conf, planId:planId, closer:closer, reading:reading
+    notes:notes, confidence:conf, planId:planId, closer:closer, reading:reading,
+    initial: JSON.parse(JSON.stringify(lay.placed))
   };
 }
 
 /* ---------- svg builders ---------- */
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
-function planSVG(res){
+var PLAN_GEOMS = {};
+function planSVG(res, prefix){
+  prefix = prefix || 'p';
   var VBW=780, VBH=580, pad=86;
   var room=res.room;
   var s=Math.min((VBW-pad*2)/room.w,(VBH-pad*2)/room.d);
@@ -1138,11 +1163,11 @@ function planSVG(res){
   for(var gx=500; gx<room.w; gx+=500) g.push('<line class="gs t" x1="'+X(gx)+'" y1="'+Y(0)+'" x2="'+X(gx)+'" y2="'+Y(room.d)+'"/>');
   for(var gy=500; gy<room.d; gy+=500) g.push('<line class="gs t" x1="'+X(0)+'" y1="'+Y(gy)+'" x2="'+X(room.w)+'" y2="'+Y(gy)+'"/>');
   p.push('<g class="gs t">'+g.join('')+'</g>');
-  res.placed.forEach(function(pl){
+  res.placed.forEach(function(pl,i){
     var r=pl.rect;
-    p.push('<rect class="gs f" x="'+X(r.x)+'" y="'+Y(r.y)+'" width="'+(r.w*s).toFixed(1)+'" height="'+(r.h*s).toFixed(1)+'"/>');
+    p.push('<rect class="gs f item" data-item="'+i+'" x="'+X(r.x)+'" y="'+Y(r.y)+'" width="'+(r.w*s).toFixed(1)+'" height="'+(r.h*s).toFixed(1)+'" rx="1.5"/>');
     var cx=X(r.x+r.w/2), cy=Y(r.y+r.h/2);
-    if(r.w*s>54 && r.h*s>20) p.push('<text class="gt" x="'+cx+'" y="'+(parseFloat(cy)+3.5)+'" font-size="9" text-anchor="middle">'+esc(pl.it.n)+'</text>');
+    if(r.w*s>54 && r.h*s>20) p.push('<text class="gt lbl" data-label="'+i+'" x="'+cx+'" y="'+(parseFloat(cy)+3.5)+'" font-size="9" text-anchor="middle">'+esc(pl.it.n)+'</text>');
   });
   var d=res.door;
   p.push('<line class="gs w" x1="'+X(d.x)+'" y1="'+Y(room.d)+'" x2="'+X(d.x)+'" y2="'+Y(room.d-d.depth)+'"/>');
@@ -1158,6 +1183,7 @@ function planSVG(res){
   p.push('<text class="gt" x="'+(X(room.w)+38)+'" y="'+Y(room.d/2)+'" font-size="10" text-anchor="middle" transform="rotate(90 '+(X(room.w)+38)+' '+Y(room.d/2)+')">'+room.d+'</text>');
   p.push('<text class="gt" x="'+X(d.x)+'" y="'+(Y(room.d)+18)+'" font-size="9" text-anchor="middle">DOOR '+d.w+'</text>');
   p.push('</svg>');
+  PLAN_GEOMS[prefix] = {s:s, ox:ox, oy:oy, room:room, res:res, prefix:prefix};
   return p.join('');
 }
 function isoProject(x,y,z){
@@ -1213,6 +1239,256 @@ function isoSVG(res){
 
 /* ---------- render ---------- */
 function nf(n){return n.toLocaleString('en-US')}
+/* ---------- 平面图交互：拖动 / 实时检查 / 建议 ---------- */
+var PLAN_INIT = null;
+
+function planOverlaps(res){
+  var out=[];
+  for(var i=0;i<res.placed.length;i++){
+    for(var j=i+1;j<res.placed.length;j++){
+      if(overlaps(res.placed[i].rect, res.placed[j].rect)) out.push([i,j]);
+    }
+  }
+  return out;
+}
+function planChecks(res){
+  var out=[];
+  var ov=planOverlaps(res);
+  if(ov.length) out.push(['warn','有 '+ov.length+' 处家具重叠，需要挪开。']);
+  else out.push(['ok','家具之间没有重叠。']);
+  var blocked=res.placed.some(function(p){return overlaps(p.rect,res.swing)});
+  if(blocked) out.push(['warn','门扇开启范围被占，开门会撞到。']);
+  else out.push(['ok','门口 1 米内是空的，开门不受影响。']);
+  var room=res.room, yLine=Math.max(0,room.d-1400), gaps=gapsAt(res.placed,room,yLine), passW=0;
+  var cx=res.door.x+res.door.w/2;
+  gaps.forEach(function(g){ if(cx>=g[0]&&cx<=g[1]) passW=g[1]-g[0] });
+  if(passW>0) out.push([passW<640?'warn':'ok','主通道净宽约 '+Math.round(passW)+'mm'+(passW<640?'，偏窄。':'，够走。')]);
+  else out.push(['warn','门口到房间没有可行走的净空。']);
+  return out;
+}
+function planFree(res, idx, x, y){
+  var r=res.placed[idx].rect, room=res.room;
+  var t={x:x,y:y,w:r.w,h:r.h};
+  if(x<40||y<40||x+t.w>room.w-40||y+t.h>room.d-40) return false;
+  if(overlaps(t,res.swing)) return false;
+  for(var i=0;i<res.placed.length;i++){
+    if(i===idx) continue;
+    var o=res.placed[i].rect;
+    if(!(t.x+t.w+60<=o.x||t.x>=o.x+o.w+60||t.y+t.h+60<=o.y||t.y>=o.y+o.h+60)) return false;
+  }
+  return true;
+}
+function moveText(dx,dy){
+  var parts=[];
+  if(dx) parts.push((dx>0?'向右':'向左')+'移 '+Math.abs(dx)+'mm');
+  if(dy) parts.push((dy>0?'向下':'向上')+'移 '+Math.abs(dy)+'mm');
+  return parts.join('、');
+}
+function planSuggest(res, idx){
+  var p=res.placed[idx]; if(!p) return null;
+  var orig = res.initial && res.initial[idx];
+  if(orig && !(orig.rect.x===p.rect.x && orig.rect.y===p.rect.y)){
+    if(planFree(res, idx, orig.rect.x, orig.rect.y)){
+      return {dx: orig.rect.x-p.rect.x, dy: orig.rect.y-p.rect.y, text:'移回原来的落位'};
+    }
+  }
+  var step=50, max=Math.max(res.room.w,res.room.d);
+  for(var d=step; d<=max; d+=step){
+    var cands=[[0,-d],[0,d],[-d,0],[d,0],[-d,-d],[d,-d],[-d,d],[d,d]];
+    for(var k=0;k<cands.length;k++){
+      var dx=cands[k][0], dy=cands[k][1];
+      if(planFree(res, idx, p.rect.x+dx, p.rect.y+dy)) return {dx:dx, dy:dy, text:moveText(dx,dy)};
+    }
+  }
+  return null;
+}
+
+function planAlt(res, idx){
+  var p=res.placed[idx], r=p.rect, step=200;
+  for(var y=90; y<=res.room.d-90-r.h; y+=step){
+    for(var x=90; x<=res.room.w-90-r.w; x+=step){
+      if(Math.abs(x-r.x)<300 && Math.abs(y-r.y)<300) continue;
+      if(planFree(res, idx, x, y)) return {dx:x-r.x, dy:y-r.y, text:moveText(x-r.x, y-r.y)};
+    }
+  }
+  return null;
+}
+
+function wirePlan(){
+  var host=document.getElementById('planLive'); if(!host) return;
+  var svg=host.querySelector('svg');
+  var g=PLAN_GEOMS['a'];
+  var res=window.__lastResult && window.__lastResult.a;
+  if(!svg||!g||!res) return;
+
+  if(!PLAN_INIT || PLAN_INIT.planId!==res.planId){
+    PLAN_INIT={planId:res.planId, placed:JSON.parse(JSON.stringify(res.placed))};
+  }
+
+  var s=g.s, ox=g.ox, oy=g.oy, room=res.room;
+  var sel=-1, drag=null, pending=null;
+
+  function toRoom(e){
+    var m=svg.getScreenCTM(); if(!m) return null;
+    var pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+    var l=pt.matrixTransform(m.inverse());
+    return {x:(l.x-ox)/s, y:(l.y-oy)/s};
+  }
+  function snap(v){ return Math.round(v/50)*50 }
+  function rectEl(i){ return svg.querySelector('rect[data-item="'+i+'"]') }
+  function labelEl(i){ return svg.querySelector('text[data-label="'+i+'"]') }
+  function paint(i){
+    var r=res.placed[i].rect, el=rectEl(i), lb=labelEl(i);
+    if(el){ el.setAttribute('x',(ox+r.x*s).toFixed(1)); el.setAttribute('y',(oy+r.y*s).toFixed(1)); }
+    if(lb){ lb.setAttribute('x',(ox+(r.x+r.w/2)*s).toFixed(1)); lb.setAttribute('y',(oy+(r.y+r.h/2)*s+3.5).toFixed(1)); }
+  }
+  function highlight(i){
+    Array.prototype.forEach.call(svg.querySelectorAll('rect.item'), function(r){
+      r.classList.toggle('sel', parseInt(r.getAttribute('data-item'),10)===i);
+    });
+  }
+  function renderSide(){
+    var chk=document.getElementById('liveChecks');
+    if(chk){
+      var list=planChecks(res);
+      chk.innerHTML='';
+      list.forEach(function(c){
+        var li=document.createElement('li'); li.className=c[0]; li.textContent=c[1]; chk.appendChild(li);
+      });
+    }
+    var hasWarn=planChecks(res).some(function(c){return c[0]==='warn'});
+    var info=document.getElementById('selInfo');
+    if(info){
+      if(sel<0) info.textContent='点一下图上的家具，或者直接拖动它。';
+      else {
+        var p=res.placed[sel];
+        info.innerHTML='<b>'+esc(p.it.n)+'</b> · '+p.rect.w+'×'+p.rect.h+'mm<br><span style="color:var(--ink-45)">X '+Math.round(p.rect.x)+' / Y '+Math.round(p.rect.y)+'</span>';
+      }
+    }
+    var tip=document.getElementById('liveTip'), btn=document.getElementById('btnApplyTip');
+    if(!tip||!btn) return;
+    pending=null;
+    if(sel<0){ tip.textContent='先选一件家具，我可以给出最小挪动建议。'; btn.disabled=true; return; }
+    if(!hasWarn){ tip.textContent='当前没有冲突，这个位置可以保留。'; btn.disabled=true; return; }
+    var sg=planSuggest(res,sel);
+    if(!sg){ tip.textContent='这件家具在这间房里找不到不冲突的位置，建议换小尺寸或移到别的房间。'; btn.disabled=true; return; }
+    pending=sg;
+    tip.innerHTML='建议：<b>'+sg.text+'</b>，就能避开冲突。';
+    btn.disabled=false;
+  }
+  function commit(i){
+    var row=document.querySelector('.pane[data-pane="list"] tbody tr:nth-child('+(i+1)+')');
+    if(row && row.children[5]) row.children[5].textContent='自定位置';
+    var iso=document.getElementById('isoLive');
+    if(iso) iso.innerHTML=isoSVG(res);
+    renderSide();
+  }
+  function apply(i, sg, cb){
+    var from={x:res.placed[i].rect.x, y:res.placed[i].rect.y};
+    var to={x:from.x+sg.dx, y:from.y+sg.dy};
+    res.placed[i].wall='自定';
+    var t0=null, dur=420, done=false;
+    function finish(){
+      if(done) return;
+      done=true;
+      res.placed[i].rect.x=to.x; res.placed[i].rect.y=to.y; paint(i);
+      if(cb) cb();
+    }
+    function step(t){
+      if(done) return;
+      if(!t0) t0=t;
+      var k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3);
+      res.placed[i].rect.x=Math.round(from.x+(to.x-from.x)*e);
+      res.placed[i].rect.y=Math.round(from.y+(to.y-from.y)*e);
+      paint(i);
+      if(k<1) requestAnimationFrame(step); else finish();
+    }
+    requestAnimationFrame(step);
+    setTimeout(finish, dur+250);
+  }
+
+  svg.addEventListener('pointerdown', function(e){
+    var t=e.target && e.target.closest ? e.target.closest('rect[data-item]') : null;
+    if(!t){
+      sel=-1; highlight(-1); renderSide(); return;
+    }
+    sel=parseInt(t.getAttribute('data-item'),10);
+    highlight(sel);
+    var p=toRoom(e); if(!p) return;
+    drag={i:sel, px:p.x, py:p.y, rx:res.placed[sel].rect.x, ry:res.placed[sel].rect.y, moved:false};
+    try{ svg.setPointerCapture(e.pointerId) }catch(err){}
+    e.preventDefault();
+    renderSide();
+  });
+  svg.addEventListener('pointermove', function(e){
+    if(!drag) return;
+    var p=toRoom(e); if(!p) return;
+    var r=res.placed[drag.i].rect;
+    var nx=clamp(drag.rx+snap(p.x-drag.px), 40, room.w-40-r.w);
+    var ny=clamp(drag.ry+snap(p.y-drag.py), 40, room.d-40-r.h);
+    if(nx===r.x && ny===r.y) return;
+    r.x=nx; r.y=ny;
+    paint(drag.i);
+    drag.moved=true;
+    renderSide();
+  });
+  function endDrag(e){
+    if(!drag) return;
+    var i=drag.i, moved=drag.moved;
+    drag=null;
+    try{ svg.releasePointerCapture(e.pointerId) }catch(err){}
+    if(moved) commit(i);
+  }
+  svg.addEventListener('pointerup', endDrag);
+  svg.addEventListener('pointercancel', endDrag);
+
+  var ab=document.getElementById('btnApplyTip');
+  if(ab) ab.addEventListener('click', function(){
+    if(sel<0 || !pending) return;
+    var i=sel, sg=pending;
+    apply(i, sg, function(){
+      commit(i);
+      var tip=document.getElementById('liveTip');
+      if(tip) tip.innerHTML='已按建议把 <b>'+esc(res.placed[i].it.n)+'</b> '+sg.text+'。';
+    });
+  });
+
+  var sb=document.getElementById('btnSimulate');
+  if(sb) sb.addEventListener('click', function(){
+    var chk=planChecks(res);
+    var hasWarn=chk.some(function(c){return c[0]==='warn'});
+    var idx=sel;
+    if(idx<0){
+      if(hasWarn){
+        for(var i=0;i<res.placed.length;i++){ if(planSuggest(res,i)){ idx=i; break } }
+      }
+      if(idx<0) idx=0;
+    }
+    if(idx<0 || !res.placed[idx]) return;
+    sel=idx; highlight(idx); renderSide();
+    var sg = hasWarn ? (planSuggest(res, idx) || planAlt(res, idx)) : planAlt(res, idx);
+    if(!sg){ var t1=document.getElementById('liveTip'); if(t1) t1.textContent='这件家具没有其它可行位置，可以试着换小一号的尺寸。'; return; }
+    apply(idx, sg, function(){
+      commit(idx);
+      var tip=document.getElementById('liveTip');
+      if(tip) tip.innerHTML='已模拟：把 <b>'+esc(res.placed[idx].it.n)+'</b> '+sg.text+'。'+(hasWarn?'冲突已解除。':'可以对比一下效果，不满意就点「还原初始落位」。');
+    });
+  });
+
+  var rb=document.getElementById('btnResetPlan');
+  if(rb) rb.addEventListener('click', function(){
+    var src = res.initial || (PLAN_INIT && PLAN_INIT.placed) || [];
+    res.placed=JSON.parse(JSON.stringify(src));
+    sel=-1;
+    var prev=window.__lastResult;
+    renderResult(prev.a, prev.b);
+    var tab=document.querySelector('#tabs button[data-pane="plan"]');
+    if(tab) tab.click();
+  });
+
+  renderSide();
+}
+
 function renderResult(res, resB){
   var el=$('#result'); var html=[];
   var typeName = res.type.k;
@@ -1271,11 +1547,18 @@ function renderResult(res, resB){
   html.push('</div>');
 
   /* plan */
-  html.push('<div class="pane" data-pane="plan" hidden><div class="dwg2"><div class="hd"><span>FIG. 01 — 平面落位图</span><span>1:'+Math.round(1000/res.room.w*3).toFixed(0)+' · 单位 mm</span></div><div class="bd">'+planSVG(res)+'</div></div>');
-  html.push('<div class="note">黑色实线为房间轮廓与门洞，细线为家具轮廓，虚线为门扇开启范围与尺寸标注。</div></div>');
+  html.push('<div class="pane" data-pane="plan" hidden>');
+  html.push('<div class="plan-wrap"><div class="dwg2"><div class="hd"><span>FIG. 01 — 平面落位图 · 可拖动</span><span>1:'+Math.round(1000/res.room.w*3).toFixed(0)+' · 单位 mm</span></div><div class="bd" id="planLive">'+planSVG(res,'a')+'</div></div>');
+  html.push('<aside class="plan-side">');
+  html.push('<div class="side-block"><h5>当前选择</h5><div class="side-text" id="selInfo">点一下图上的家具，或者直接拖动它。</div></div>');
+  html.push('<div class="side-block"><h5>实时检查</h5><ul class="side-list" id="liveChecks"></ul></div>');
+  html.push('<div class="side-block"><h5>建议</h5><div class="side-text" id="liveTip">拖动任意家具试试，我会实时告诉你有没有撞上。</div><div class="side-actions"><button class="btn btn--sm" id="btnApplyTip" disabled>应用建议</button><button class="btn btn--sm" id="btnSimulate">模拟挪动</button></div></div>');
+  html.push('<div class="side-block"><h5>方案</h5><button class="btn btn--sm" id="btnResetPlan">还原初始落位</button></div>');
+  html.push('</aside></div>');
+  html.push('<div class="note">'+'图纸上 '+res.placed.length+' 件已落位'+(res.unplaced.length?'，另有 '+res.unplaced.length+' 件放不下（清单里标了「放不下」）':'')+'。拖动家具可自行调整；虚线是门扇开启范围，压到它会提示。改完可以直接导出新的平面图。</div></div>');
 
   /* iso */
-  html.push('<div class="pane" data-pane="iso" hidden><div class="dwg2"><div class="hd"><span>FIG. 02 — 立体草图 ISO VIEW</span><span>层高 '+res.room.h+'mm</span></div><div class="bd">'+isoSVG(res)+'</div></div>');
+  html.push('<div class="pane" data-pane="iso" hidden><div class="dwg2"><div class="hd"><span>FIG. 02 — 立体草图 ISO VIEW</span><span>层高 '+res.room.h+'mm</span></div><div class="bd" id="isoLive">'+isoSVG(res)+'</div></div>');
   html.push('<div class="note">等距投影线框，按真实比例绘制；前方两面墙省略，方便看内部。</div></div>');
 
   /* advice */
@@ -1345,6 +1628,7 @@ function renderResult(res, resB){
   el.hidden = false;
   setEmpty(false);
   window.__lastResult = {a:res, b:resB||null};
+  wirePlan();
 
   /* tabs */
   var tabs=$('#tabs');
@@ -1492,10 +1776,14 @@ document.addEventListener('dragover', function(e){ e.preventDefault() });
 document.addEventListener('drop', function(e){ e.preventDefault() });
 
 /* sample */
+var demoFlip=false;
 function loadSamples(){
+  demoFlip=!demoFlip;
   photos.A=[]; photos.B=[];
-  addPhoto('A', {name:SAMPLES[0].name, src:SAMPLES[0].src, sample:true});
-  addPhoto('B', {name:SAMPLES[1].name, src:SAMPLES[1].src, sample:true});
+  var first = demoFlip ? SAMPLES[0] : SAMPLES[1];
+  var second = demoFlip ? SAMPLES[1] : SAMPLES[0];
+  addPhoto('A', {name:first.name, src:first.src, sample:true});
+  addPhoto('B', {name:second.name, src:second.src, sample:true});
   activeRoom='A';
   $$('#roomSwitch button').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-room')==='A') });
   renderThumbs();
