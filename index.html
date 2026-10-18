@@ -274,6 +274,9 @@ footer{border-top:1px solid var(--line);padding:clamp(36px,5vw,64px) 0 30px}
 .notes li{font-size:12.5px;line-height:1.85;color:var(--ink-70);font-weight:300;padding:4px 0 4px 14px}
 .reading{margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13.5px;line-height:1.95;color:var(--ink-70);font-weight:300;max-width:86ch}
 .resid{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--ink-45);margin-bottom:8px}
+.eng{display:inline-block;font-size:8.5px;letter-spacing:.1em;padding:2px 6px;border:1px solid var(--line-strong);margin-left:4px;vertical-align:1px}
+.eng.ok{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.eng.sim{border-style:dashed;color:var(--ink-45)}
 .tabs{display:flex;gap:0;border-bottom:1px solid var(--line-strong);margin-bottom:24px;flex-wrap:wrap}
 .tabs button{background:none;border:0;border-bottom:1px solid transparent;padding:11px 16px 11px 0;margin-right:22px;cursor:pointer;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-45);transition:color .3s,border-color .3s}
 .tabs button.on{color:var(--ink);border-color:var(--ink)}
@@ -699,6 +702,85 @@ var CATALOG = [
 ];
 var ROOMS = [[2800,3600],[3000,4000],[3200,4200],[3600,4800],[4200,5400],[2800,4600]];
 
+/* ---------- 真实物体检测（COCO-SSD）---------- */
+var DET_MAP = {
+  'bed':          {n:'床',     c:'卧具', w:2000,d:1500,h:450, kg:55},
+  'chair':        {n:'椅子',   c:'家具', w:450, d:450, h:900, kg:6},
+  'couch':        {n:'沙发',   c:'家具', w:2000,d:900, h:800, kg:60},
+  'dining table': {n:'餐桌',   c:'家具', w:1200,d:700, h:750, kg:30},
+  'bench':        {n:'长凳',   c:'家具', w:1200,d:400, h:450, kg:15},
+  'tv':           {n:'电视',   c:'家电', w:1200,d:90,  h:700, kg:15},
+  'refrigerator': {n:'冰箱',   c:'家电', w:600, d:650, h:1800,kg:65},
+  'oven':         {n:'烤箱',   c:'家电', w:600, d:550, h:600, kg:30},
+  'microwave':    {n:'微波炉', c:'家电', w:500, d:400, h:300, kg:12},
+  'sink':         {n:'水槽',   c:'家电', w:600, d:450, h:200, kg:15},
+  'toilet':       {n:'马桶',   c:'家电', w:700, d:400, h:750, kg:35},
+  'suitcase':     {n:'行李箱', c:'杂物', w:700, d:450, h:300, kg:4},
+  'backpack':     {n:'背包',   c:'杂物', w:400, d:300, h:500, kg:2},
+  'laptop':       {n:'笔记本', c:'杂物', w:350, d:250, h:25,  kg:2},
+  'book':         {n:'书',     c:'杂物', w:250, d:180, h:40,  kg:1},
+  'clock':        {n:'时钟',   c:'杂物', w:300, d:100, h:300, kg:1},
+  'vase':         {n:'花瓶',   c:'软装', w:200, d:200, h:400, kg:2},
+  'potted plant': {n:'盆栽',   c:'软装', w:500, d:500, h:1200,kg:8},
+  'hair drier':   {n:'电吹风', c:'杂物', w:250, d:150, h:250, kg:1}
+};
+var MODEL = null, MODEL_PROMISE = null;
+
+function loadScript(src){
+  return new Promise(function(res, rej){
+    var s = document.createElement('script');
+    s.src = src; s.async = true;
+    s.onload = function(){ res() };
+    s.onerror = function(){ rej(new Error('script load failed')) };
+    document.head.appendChild(s);
+  });
+}
+function ensureModel(){
+  if(MODEL) return Promise.resolve(MODEL);
+  if(MODEL_PROMISE) return MODEL_PROMISE;
+  var tfUrls = ['https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js',
+                'https://unpkg.com/@tensorflow/tfjs@4.20.0/dist/tf.min.js'];
+  var cocoUrls = ['https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js',
+                  'https://unpkg.com/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js'];
+  function firstOk(urls, i){
+    i = i || 0;
+    return loadScript(urls[i]).catch(function(err){
+      if(i + 1 < urls.length) return firstOk(urls, i + 1);
+      throw err;
+    });
+  }
+  MODEL_PROMISE = firstOk(tfUrls)
+    .then(function(){ return firstOk(cocoUrls) })
+    .then(function(){ return window.cocoSsd.load({base:'lite_mobilenet_v2'}) })
+    .then(function(m){ MODEL = m; return m })
+    .catch(function(err){ MODEL_PROMISE = null; throw err });
+  return MODEL_PROMISE;
+}
+function detectPhoto(src){
+  return loadImage(src).then(function(im){
+    return MODEL.detect(im, 20, 0.35).then(function(preds){
+      return preds.filter(function(p){ return !!DET_MAP[p.class] })
+                  .map(function(p){ return {cls:p.class, score:p.score} });
+    });
+  }).catch(function(){ return [] });
+}
+function itemsFromDetections(perPhoto){
+  var byClass = {};
+  perPhoto.forEach(function(list){
+    var c = {};
+    (list || []).forEach(function(d){ if(DET_MAP[d.cls]) c[d.cls] = (c[d.cls] || 0) + 1 });
+    Object.keys(c).forEach(function(k){ byClass[k] = Math.max(byClass[k] || 0, c[k]) });
+  });
+  var items = [];
+  Object.keys(byClass).forEach(function(k){
+    var m = DET_MAP[k], q = byClass[k];
+    for(var i = 0; i < q; i++){
+      items.push({n:m.n, c:m.c, w:m.w, d:m.d, h:m.h, kg:m.kg, est:false, src:'detected'});
+    }
+  });
+  return items;
+}
+
 /* ---------- photo state ---------- */
 var photos = {A:[], B:[]};
 var activeRoom = 'A';
@@ -1000,14 +1082,19 @@ function layoutRoom(room, items, seed){
 function wallName(k){
   return ({top:'北墙', bottom:'南墙（靠门侧）', left:'西墙', right:'东墙', floor:'房间中部'})[k]||'房间中部';
 }
-function analyze(list, seedStr){
+function analyze(list, seedStr, dets){
   var profile = buildProfile(list, seedStr);
   var rng = mulberry32(hashStr(seedStr+'|items'));
   var type = roomType(profile, mulberry32(hashStr(seedStr+'|type')));
-  var items = pickItems(profile, rng, Math.max(list.length,3)).map(function(it){ return sizeOf(it, rng) });
+  var engine = 'sim', items = null;
+  if(dets && dets.length){
+    var detItems = itemsFromDetections(dets);
+    if(detItems.length){ items = detItems; engine = 'coco'; }
+  }
+  if(!items) items = pickItems(profile, rng, Math.max(list.length,3)).map(function(it){ return sizeOf(it, rng) });
 
   var footprint = items.reduce(function(a,i){return a + i.w*i.d},0);
-  var need = footprint/0.34, idx = -1, minArea = Infinity, maxIdx = 0, maxArea = 0;
+  var need = Math.max(footprint/0.34, 9.0), idx = -1, minArea = Infinity, maxIdx = 0, maxArea = 0;
   for(var i=0;i<ROOMS.length;i++){
     var a = ROOMS[i][0]*ROOMS[i][1];
     if(a > maxArea){ maxArea = a; maxIdx = i; }
@@ -1139,6 +1226,7 @@ function analyze(list, seedStr){
     volume:volume, weight:weight, totalVol:totalVol, occupancy: usedArea/(room.w*room.d),
     boxes:boxes, small:small.length, photoCount:list.length,
     notes:notes, confidence:conf, planId:planId, closer:closer, reading:reading,
+    engine: engine,
     initial: JSON.parse(JSON.stringify(lay.placed))
   };
 }
@@ -1493,7 +1581,7 @@ function renderResult(res, resB){
   var el=$('#result'); var html=[];
   var typeName = res.type.k;
   html.push('<div class="res-head">');
-  html.push('<div class="resid">'+esc(res.planId)+' · 置信度 '+Math.round(res.confidence*100)+'%</div>');
+  html.push('<div class="resid">'+esc(res.planId)+' · 置信度 '+Math.round(res.confidence*100)+'% · <span class="eng '+(res.engine==='coco'?'ok':'sim')+'">'+(res.engine==='coco'?'真实识别 · COCO-SSD':'模拟估算 · 模型未加载')+'</span></div>');
   html.push('<h3>'+esc(typeName)+' · 已识别 '+res.items.length+' 件物品</h3>');
   html.push('<p>'+esc(res.type.d)+' 房间开间 '+res.room.w+'mm、进深 '+res.room.d+'mm、层高 '+res.room.h+'mm。以下结果根据 '+res.photoCount+' 张照片独立计算。</p>');
   html.push('<div class="readout">'+
@@ -1533,14 +1621,14 @@ function renderResult(res, resB){
       '<td class="n">'+it.w+' × '+it.d+' × '+it.h+'</td>'+
       '<td class="n">'+(it.w*it.d*it.h/1e9).toFixed(3)+'</td>'+
       '<td>'+wallName(pl.wall)+'</td>'+
-      '<td class="n">'+(it.est?'估':'标准值')+'</td></tr>');
+      '<td class="n">'+(it.src==='detected'?'识别':(it.est?'估':'标准值'))+'</td></tr>');
   });
   res.unplaced.forEach(function(it){
     html.push('<tr><td class="n">--</td><td>'+esc(it.n)+'</td><td>'+esc(it.c)+'</td>'+
       '<td class="n">'+it.w+' × '+it.d+' × '+it.h+'</td>'+
       '<td class="n">'+(it.w*it.d*it.h/1e9).toFixed(3)+'</td>'+
       '<td><span class="pill warn">放不下</span></td>'+
-      '<td class="n">'+(it.est?'估':'标准值')+'</td></tr>');
+      '<td class="n">'+(it.src==='detected'?'识别':(it.est?'估':'标准值'))+'</td></tr>');
   });
   html.push('</tbody></table>');
   html.push('<div class="note">「标准值」= 直接套用该品类常见尺寸；「估」= 根据照片透视推算，误差约 ±3cm。</div>');
@@ -1670,7 +1758,7 @@ function exportCsv(res){
 }
 
 /* ---------- progress ---------- */
-var STEPS=['读取照片','识别物品品类','量取尺寸','计算落位','生成图纸与清单'];
+var STEPS=['读取照片 · 加载识别模型','识别物品品类','量取尺寸','计算落位','生成图纸与清单'];
 function renderProgress(now){
   var ol=$('#progList'); ol.innerHTML='';
   STEPS.forEach(function(s,i){
@@ -1703,15 +1791,27 @@ async function run(){
     for(var i=0;i<list.length;i++){
       if(!list[i].metrics){ list[i].metrics = await metricsFromSrc(list[i].src) }
     }
+    var detsA = null;
+    try{
+      await ensureModel();
+      detsA = [];
+      for(var d1=0; d1<list.length; d1++){ detsA.push(await detectPhoto(list[d1].src)) }
+    }catch(errModel){ detsA = null }
     var tLoad=Date.now();
     renderProgress(1); await sleep(240);
-    var resA = analyze(list, seedFor(list));
+    var resA = analyze(list, seedFor(list), detsA);
     renderProgress(2); await sleep(300);
     renderProgress(3); await sleep(320);
     var resB=null;
     if(other.length){
       for(var j=0;j<other.length;j++){ if(!other[j].metrics){ other[j].metrics = await metricsFromSrc(other[j].src) } }
-      resB = analyze(other, seedFor(other));
+      var detsB = null;
+      try{
+        await ensureModel();
+        detsB = [];
+        for(var d2=0; d2<other.length; d2++){ detsB.push(await detectPhoto(other[d2].src)) }
+      }catch(errModel2){ detsB = null }
+      resB = analyze(other, seedFor(other), detsB);
     } else { renderProgress(4); await sleep(200) }
     renderProgress(5);
     renderResult(resA, resB);
