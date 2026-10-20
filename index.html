@@ -574,7 +574,7 @@ footer{border-top:1px solid var(--line);padding:clamp(36px,5vw,64px) 0 30px}
       <div><h5>关于</h5><a>公司</a><a>隐私</a><a>联系</a></div>
     </div>
     <div class="foot-bottom">
-      <span class="mono">© 2026 PLANO — PHOTOS IN, PLANS OUT. · BUILD v1.7</span>
+      <span class="mono">© 2026 PLANO — PHOTOS IN, PLANS OUT. · BUILD v1.8</span>
       <span class="mono">SHANGHAI · 31.23°N 121.47°E</span>
     </div>
   </div>
@@ -586,7 +586,7 @@ footer{border-top:1px solid var(--line);padding:clamp(36px,5vw,64px) 0 30px}
   <div class="st-top">
     <div class="l">
       <svg viewBox="0 0 26 26"><path d="M23 23 H3 V3 H12.5 A5 5 0 0 1 12.5 13 H3" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <b>PLANO</b><span>WORKSPACE / LOCAL ENGINE · v1.7</span>
+      <b>PLANO</b><span>WORKSPACE / LOCAL ENGINE · v1.8</span>
     </div>
     <button class="btn btn--sm" id="stClose">关闭</button>
   </div>
@@ -713,7 +713,7 @@ var DET_MAP = {
   'bed':          {n:'床',     c:'卧具', w:2000,d:1500,h:450, kg:55},
   'chair':        {n:'椅子',   c:'家具', w:450, d:450, h:900, kg:6},
   'couch':        {n:'沙发',   c:'家具', w:2000,d:900, h:800, kg:60},
-  'dining table': {n:'餐桌',   c:'家具', w:1200,d:700, h:750, kg:30},
+  'dining table': {n:'桌子',   c:'家具', w:1200,d:700, h:750, kg:30},
   'bench':        {n:'长凳',   c:'家具', w:1200,d:400, h:450, kg:15},
   'tv':           {n:'电视',   c:'家电', w:1200,d:90,  h:700, kg:15},
   'refrigerator': {n:'冰箱',   c:'家电', w:600, d:650, h:1800,kg:65},
@@ -724,7 +724,12 @@ var DET_MAP = {
   'suitcase':     {n:'行李箱', c:'杂物', w:700, d:450, h:300, kg:4},
   'backpack':     {n:'背包',   c:'杂物', w:400, d:300, h:500, kg:2},
   'laptop':       {n:'笔记本', c:'杂物', w:350, d:250, h:25,  kg:2},
+  'keyboard':     {n:'键盘',   c:'杂物', w:450, d:150, h:30,  kg:1},
+  'mouse':        {n:'鼠标',   c:'杂物', w:110, d:70,  h:40,  kg:1},
+  'cell phone':   {n:'手机',   c:'杂物', w:160, d:10,  h:80,  kg:1},
   'book':         {n:'书',     c:'杂物', w:250, d:180, h:40,  kg:1},
+  'bottle':       {n:'瓶子',   c:'杂物', w:80,  d:80,  h:250, kg:1},
+  'cup':          {n:'杯子',   c:'杂物', w:90,  d:90,  h:110, kg:1},
   'clock':        {n:'时钟',   c:'杂物', w:300, d:100, h:300, kg:1},
   'vase':         {n:'花瓶',   c:'软装', w:200, d:200, h:400, kg:2},
   'potted plant': {n:'盆栽',   c:'软装', w:500, d:500, h:1200,kg:8},
@@ -762,20 +767,54 @@ function ensureModel(){
     .catch(function(err){ MODEL_PROMISE = null; throw err });
   return MODEL_PROMISE;
 }
+function filterPreds(preds, cw, ch){
+  var area = (cw || 1) * (ch || 1);
+  return preds.filter(function(p){
+    if(!DET_MAP[p.class]) return false;
+    var bb = p.bbox || [0,0,1,1];
+    var a = (bb[2] || 0) * (bb[3] || 0);
+    return a / area >= 0.008;
+  });
+}
+function countClasses(preds){
+  var m = {};
+  preds.forEach(function(p){ m[p.class] = (m[p.class] || 0) + 1 });
+  return m;
+}
 function detectPhoto(src){
   return loadImage(src).then(function(im){
     var w = im.naturalWidth || im.width, h = im.naturalHeight || im.height;
-    var max = 512, sc = Math.min(1, max / Math.max(w, h));
+    var max = 560, sc = Math.min(1, max / Math.max(w, h));
     var c = document.createElement('canvas');
     c.width = Math.max(1, Math.round(w * sc));
     c.height = Math.max(1, Math.round(h * sc));
     var ctx = c.getContext('2d');
     ctx.drawImage(im, 0, 0, c.width, c.height);
     try{ im.src = ''; }catch(_e){}
-    return MODEL.detect(c, 20, 0.35).then(function(preds){
+
+    var passes = [MODEL.detect(c, 30, 0.26)];
+    var hw = Math.floor(c.width / 2);
+    [0, hw].forEach(function(x0){
+      var t = document.createElement('canvas');
+      t.width = 480;
+      t.height = Math.max(1, Math.round(480 * c.height / hw));
+      var tc = t.getContext('2d');
+      tc.drawImage(c, x0, 0, hw, c.height, 0, 0, t.width, t.height);
+      passes.push(MODEL.detect(t, 30, 0.26));
+    });
+
+    return Promise.all(passes).then(function(all){
+      var best = {};
+      all.forEach(function(preds){
+        var m = countClasses(filterPreds(preds, c.width, c.height));
+        Object.keys(m).forEach(function(k){ best[k] = Math.max(best[k] || 0, m[k]) });
+      });
       try{ c.width = 1; c.height = 1; }catch(_e){}
-      return preds.filter(function(p){ return !!DET_MAP[p.class] })
-                  .map(function(p){ return {cls:p.class, score:p.score} });
+      var out = [];
+      Object.keys(best).forEach(function(k){
+        for(var i=0;i<best[k];i++) out.push({cls:k, score:1});
+      });
+      return out;
     });
   }).catch(function(){ return [] });
 }
@@ -2119,7 +2158,7 @@ function selfTest(){
 }
 
 /* ---------- 版本自检：打开即最新 ---------- */
-var BUILD_ID = '1.7';
+var BUILD_ID = '1.8';
 (function versionCheck(){
   try{
     if(sessionStorage.getItem('plano_reload') === BUILD_ID) return;
