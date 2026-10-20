@@ -286,6 +286,11 @@ footer{border-top:1px solid var(--line);padding:clamp(36px,5vw,64px) 0 30px}
 .tbl td{padding:11px 8px 11px 0;border-bottom:1px solid var(--line);vertical-align:top}
 .tbl td.n,.tbl th.n{font-family:var(--mono);white-space:nowrap}
 .tbl tr:hover td{background:var(--paper-2)}
+.list-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.list-tools select{font-family:var(--mono);font-size:11px;padding:8px 10px;border:1px solid var(--line-strong);background:var(--paper);color:var(--ink);min-width:180px}
+.list-tools .mono{font-size:9px;letter-spacing:.1em;margin-left:auto}
+.rowdel{border:1px solid var(--line);background:none;cursor:pointer;width:22px;height:22px;line-height:1;font-size:12px}
+.rowdel:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .pill{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:.1em;border:1px solid var(--line-strong);padding:2px 7px;margin-right:6px}
 .pill.warn{border-color:var(--ink);background:var(--ink);color:var(--paper)}
 .block{border:1px solid var(--line);padding:18px 20px;margin-bottom:16px}
@@ -569,7 +574,7 @@ footer{border-top:1px solid var(--line);padding:clamp(36px,5vw,64px) 0 30px}
       <div><h5>关于</h5><a>公司</a><a>隐私</a><a>联系</a></div>
     </div>
     <div class="foot-bottom">
-      <span class="mono">© 2026 PLANO — PHOTOS IN, PLANS OUT. · BUILD v1.6</span>
+      <span class="mono">© 2026 PLANO — PHOTOS IN, PLANS OUT. · BUILD v1.7</span>
       <span class="mono">SHANGHAI · 31.23°N 121.47°E</span>
     </div>
   </div>
@@ -581,7 +586,7 @@ footer{border-top:1px solid var(--line);padding:clamp(36px,5vw,64px) 0 30px}
   <div class="st-top">
     <div class="l">
       <svg viewBox="0 0 26 26"><path d="M23 23 H3 V3 H12.5 A5 5 0 0 1 12.5 13 H3" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <b>PLANO</b><span>WORKSPACE / LOCAL ENGINE · v1.6</span>
+      <b>PLANO</b><span>WORKSPACE / LOCAL ENGINE · v1.7</span>
     </div>
     <button class="btn btn--sm" id="stClose">关闭</button>
   </div>
@@ -1588,6 +1593,37 @@ function wirePlan(){
   renderSide();
 }
 
+function rerenderWith(res, resB){
+  renderResult(res, resB);
+  var tab=document.querySelector('#tabs button[data-pane="list"]');
+  if(tab) tab.click();
+}
+function wireList(res, resB){
+  var pane=document.querySelector('#result .pane[data-pane="list"]');
+  if(!pane) return;
+  pane.addEventListener('click', function(ev){
+    var b=ev.target && ev.target.closest ? ev.target.closest('.rowdel') : null;
+    if(!b) return;
+    var kind=b.getAttribute('data-kind'), i=parseInt(b.getAttribute('data-i'),10);
+    if(isNaN(i)) return;
+    if(kind==='placed' && res.placed[i]) res.placed.splice(i,1);
+    else if(kind==='unplaced' && res.unplaced[i]) res.unplaced.splice(i,1);
+    rerenderWith(res, resB);
+  });
+  var addBtn=document.getElementById('addBtn');
+  if(addBtn) addBtn.addEventListener('click', function(){
+    var sel=document.getElementById('addSel'); if(!sel) return;
+    var c=CATALOG[parseInt(sel.value,10)]; if(!c) return;
+    var items=res.placed.map(function(p){return p.it}).concat(res.unplaced);
+    items.push({n:c.n, c:c.c, w:c.w, d:c.d, h:c.h, kg:c.kg, est:false, src:'manual'});
+    var lay=layoutRoom(res.room, items, 991);
+    res.placed=lay.placed; res.unplaced=lay.unplaced;
+    res.conflicts=lay.conflicts;
+    res.initial=JSON.parse(JSON.stringify(lay.placed));
+    rerenderWith(res, resB);
+  });
+}
+
 function renderResult(res, resB){
   var el=$('#result'); var html=[];
   var typeName = res.type.k;
@@ -1625,21 +1661,24 @@ function renderResult(res, resB){
 
   /* list */
   html.push('<div class="pane" data-pane="list">');
-  html.push('<table class="tbl"><thead><tr><th class="n">#</th><th>物品</th><th>类别</th><th class="n">尺寸 W×D×H (mm)</th><th class="n">体积 (m³)</th><th>建议位置</th><th class="n">来源</th></tr></thead><tbody>');
+  html.push('<div class="list-tools"><select id="addSel">'+CATALOG.map(function(c,i){return '<option value="'+i+'">'+esc(c.n)+'</option>'}).join('')+'</select><button class="btn btn--sm" id="addBtn">添加物品</button><span class="mono">识别错了？直接删掉或补上</span></div>');
+  html.push('<table class="tbl"><thead><tr><th class="n">#</th><th>物品</th><th>类别</th><th class="n">尺寸 W×D×H (mm)</th><th class="n">体积 (m³)</th><th>建议位置</th><th class="n">来源</th><th></th></tr></thead><tbody>');
   res.placed.forEach(function(pl,i){
     var it=pl.it;
     html.push('<tr><td class="n">'+String(i+1).padStart(2,'0')+'</td><td>'+esc(it.n)+'</td><td>'+esc(it.c)+'</td>'+
       '<td class="n">'+it.w+' × '+it.d+' × '+it.h+'</td>'+
       '<td class="n">'+(it.w*it.d*it.h/1e9).toFixed(3)+'</td>'+
       '<td>'+wallName(pl.wall)+'</td>'+
-      '<td class="n">'+(it.src==='detected'?'识别':(it.est?'估':'标准值'))+'</td></tr>');
+      '<td class="n">'+(it.src==='detected'?'识别':(it.src==='manual'?'手动':(it.est?'估':'标准值')))+'</td>'+
+      '<td class="n"><button class="rowdel" data-kind="placed" data-i="'+i+'" title="删除这件">×</button></td></tr>');
   });
   res.unplaced.forEach(function(it){
     html.push('<tr><td class="n">--</td><td>'+esc(it.n)+'</td><td>'+esc(it.c)+'</td>'+
       '<td class="n">'+it.w+' × '+it.d+' × '+it.h+'</td>'+
       '<td class="n">'+(it.w*it.d*it.h/1e9).toFixed(3)+'</td>'+
       '<td><span class="pill warn">放不下</span></td>'+
-      '<td class="n">'+(it.src==='detected'?'识别':(it.est?'估':'标准值'))+'</td></tr>');
+      '<td class="n">'+(it.src==='detected'?'识别':(it.src==='manual'?'手动':(it.est?'估':'标准值')))+'</td>'+
+      '<td class="n"><button class="rowdel" data-kind="unplaced" data-i="'+res.unplaced.indexOf(it)+'" title="删除这件">×</button></td></tr>');
   });
   html.push('</tbody></table>');
   html.push('<div class="note">「标准值」= 直接套用该品类常见尺寸；「估」= 根据照片透视推算，误差约 ±3cm。</div>');
@@ -1738,6 +1777,7 @@ function renderResult(res, resB){
       $$('.pane',el).forEach(function(p){ p.hidden = p.getAttribute('data-pane')!==b.getAttribute('data-pane') });
     });
   }
+  wireList(res, resB);
   /* exports */
   var csvBtn=$('#btnCsv'); if(csvBtn) csvBtn.addEventListener('click', function(){ exportCsv(res) });
   var sp=$('#btnSvgPlan'); if(sp) sp.addEventListener('click', function(){ download('plano-plan.svg', planSVG(res), 'image/svg+xml') });
@@ -1811,7 +1851,7 @@ async function run(){
     var detsA = null;
     if(!FORCE_SIM){
       try{
-        await withTimeout(ensureModel(), 30000, '识别模型加载超时');
+        await withTimeout(ensureModel(), 10000, '识别模型加载超时');
         detsA = [];
         for(var d1=0; d1<list.length; d1++){
           if(Date.now()-t0 > 45000) break;
@@ -1854,7 +1894,13 @@ async function run(){
     if(fellBack){
       var note=document.createElement('div');
       note.className='fallback-note';
-      note.textContent='本次已自动切到估算模式（'+fallbackReason+'），结果仅供参考。识别模型就绪后重新扫描即可获得真实识别。';
+      note.textContent='本次已自动切到估算模式（'+fallbackReason+'），结果仅供参考。';
+      var rBtn=document.createElement('button');
+      rBtn.className='btn btn--sm';
+      rBtn.style.marginLeft='10px';
+      rBtn.textContent='重试真实识别';
+      rBtn.addEventListener('click', function(){ FORCE_SIM=false; run(); });
+      note.appendChild(rBtn);
       var out=document.getElementById('result');
       if(out) out.insertBefore(note, out.firstChild);
     }
@@ -2071,6 +2117,23 @@ function selfTest(){
     pass: Object.keys(ids).length === n && Object.keys(answers).length === n && deterministic
   };
 }
+
+/* ---------- 版本自检：打开即最新 ---------- */
+var BUILD_ID = '1.7';
+(function versionCheck(){
+  try{
+    if(sessionStorage.getItem('plano_reload') === BUILD_ID) return;
+    fetch('version.json?t=' + Date.now(), {cache:'no-store'})
+      .then(function(r){ return r.ok ? r.json() : null })
+      .then(function(d){
+        if(!d || !d.v) return;
+        if(String(d.v) !== BUILD_ID){
+          sessionStorage.setItem('plano_reload', String(d.v));
+          location.replace(location.pathname + '?v=' + encodeURIComponent(d.v));
+        }
+      }).catch(function(){});
+  }catch(e){}
+})();
 
 renderThumbs();
 initMini();
